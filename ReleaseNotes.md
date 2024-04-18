@@ -3,6 +3,8 @@
 # Release notes lib-vau for ePA 3.x and above
 
 ## Release 1.0.3
+### added
+- .githubignore
 
 ### added
 - Added Files LICENSE.md, ReleaseNotes.md, SECURITY.md and LICENSE headers for external release
@@ -24,3 +26,4 @@
   - encryption & decryption of data streams
   - statemachine for VAU client
   - statemachine for VAU server
+x
