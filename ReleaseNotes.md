@@ -2,6 +2,15 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.5
+### fixed
+- Updated .gitignore
+- Updated teams notification url
+
+## Release 1.0.4
+### fixed
+- Added jenkinsfiles to .githubignore
+
 ## Release 1.0.3
 ### added
 - .githubignore
