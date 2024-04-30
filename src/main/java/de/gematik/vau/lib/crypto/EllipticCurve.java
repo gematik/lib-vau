@@ -32,6 +32,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.BigIntegers;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EllipticCurve {
@@ -105,6 +106,6 @@ public class EllipticCurve {
     ECPublicKeyParameters publicKeyParameters = new ECPublicKeyParameters(ecPoint, domainParams);
 
     BigInteger sharedSecret = ecdhBasicAgreement.calculateAgreement(publicKeyParameters);
-    return sharedSecret.toByteArray();
+    return BigIntegers.asUnsignedByteArray(32, sharedSecret);
   }
 }
