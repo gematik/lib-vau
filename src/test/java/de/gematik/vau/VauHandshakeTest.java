@@ -27,7 +27,11 @@ import de.gematik.vau.lib.data.VauPublicKeys;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.DERBitString;
+import org.bouncycastle.asn1.DLSequence;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
@@ -58,6 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VauHandshakeTest {
 
   private static final int KYBER_768_BYTE_LENGTH = 1184;
+  private static final String TGR_FILENAME = "target/vau3traffic.tgr";
 
   static {
     Security.addProvider(new BouncyCastlePQCProvider());
@@ -69,7 +74,7 @@ class VauHandshakeTest {
   @SneakyThrows
   @Test
   void testHandshake() {
-    Files.deleteIfExists(Path.of("target/traffic.tgr"));
+    Files.deleteIfExists(Path.of(TGR_FILENAME));
 
     KeyFactory keyFactory = KeyFactory.getInstance("EC");
     PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(
@@ -90,10 +95,12 @@ class VauHandshakeTest {
 
     assertThat(serverVauKeyPair.getKyberKeyPair().getPublic().getAlgorithm()).isEqualTo("KYBER768");
     assertThat(serverVauKeyPair.getKyberKeyPair().getPrivate().getAlgorithm()).isEqualTo("KYBER768");
-    assertThat(((BCKyberPublicKey) serverVauKeyPair.getKyberKeyPair().getPublic()).getParameterSpec().getName()).isEqualTo("KYBER768");
-    assertThat(((BCKyberPrivateKey) serverVauKeyPair.getKyberKeyPair().getPrivate()).getParameterSpec().getName()).isEqualTo("KYBER768");
-
-
+    assertThat(
+      ((BCKyberPublicKey) serverVauKeyPair.getKyberKeyPair().getPublic()).getParameterSpec().getName()).isEqualTo(
+      "KYBER768");
+    assertThat(
+      ((BCKyberPrivateKey) serverVauKeyPair.getKyberKeyPair().getPrivate()).getParameterSpec().getName()).isEqualTo(
+      "KYBER768");
 
     VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     VauClientStateMachine client = new VauClientStateMachine();
@@ -130,14 +137,15 @@ class VauHandshakeTest {
     bundleInHttpRequestAndWriteToFile("/vau", message1Encoded);
     final String vauCid = "/vau/URL-von-der-VAU-waehrend-des-Handshakes-gewaehlt-abcdefghij1234567890";
     bundleInHttpResponseAndWriteToFile(message2Encoded, Pair.of("VAU-DEBUG-S_K1_s2c",
-        java.util.Base64.getUrlEncoder().encodeToString(server.getS2c())),
+        java.util.Base64.getEncoder().encodeToString(server.getS2c())),
       Pair.of("VAU-DEBUG-S_K1_c2s",
-        java.util.Base64.getUrlEncoder().encodeToString(server.getC2s())),
-      Pair.of("VAU-CID",
-        java.util.Base64.getUrlEncoder().encodeToString(server.getC2s())));
+        java.util.Base64.getEncoder().encodeToString(server.getC2s())),
+      Pair.of("VAU-CID", vauCid));
     bundleInHttpRequestAndWriteToFile(vauCid, message3Encoded);
     bundleInHttpResponseAndWriteToFile(message4Encoded);
-    bundleInHttpRequestAndWriteToFile(vauCid, encryptedClientVauMessage);
+    bundleInHttpRequestAndWriteToFile(vauCid, encryptedClientVauMessage, Pair.of("VAU-nonPU-Tracing",
+      Base64.toBase64String(server.getServerKey2().getClientToServerAppData()) + " " + Base64.toBase64String(
+        server.getServerKey2().getServerToClientAppData()) + "\n"));
     bundleInHttpResponseAndWriteToFile(encryptedServerVauMessage);
 
     Files.write(Path.of("target/serverEcc.pem"), writeKeyPair(serverVauKeyPair.getEccKeyPair()).getBytes());
@@ -149,7 +157,7 @@ class VauHandshakeTest {
     final ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(encoded));
     final ASN1Primitive object = asn1InputStream.readObject();
     final ASN1Primitive secondParameterASN1Primitive = ((DLSequence) object).getObjectAt(1).toASN1Primitive();
-    final byte[] secondParameter = ((DERBitString)secondParameterASN1Primitive).getOctets();
+    final byte[] secondParameter = ((DERBitString) secondParameterASN1Primitive).getOctets();
     return secondParameter.length == KYBER_768_BYTE_LENGTH;
   }
 
@@ -181,12 +189,21 @@ class VauHandshakeTest {
   }
 
   @SneakyThrows
-  private void bundleInHttpRequestAndWriteToFile(String path, byte[] payload) {
+  private void bundleInHttpRequestAndWriteToFile(String path, byte[] payload,
+    Pair<String, String>... additionalHeader) {
+    String additionalHeaders = Stream.of(additionalHeader)
+      .map(p -> p.getLeft() + ": " + p.getRight())
+      .collect(Collectors.joining("\r\n"));
+    if (!additionalHeaders.isBlank()) {
+      additionalHeaders += "\r\n";
+    }
     byte[] httpRequest = ("POST " + path + " HTTP/1.1\r\n"
                           + "Host: vau.gematik.de\r\n"
+                          + additionalHeaders
                           + "Content-Type: application/cbor\r\n"
                           + "Content-Length: " + payload.length + "\r\n\r\n").getBytes();
-    Files.write(Path.of("target/vau3Traffic.tgr"), makeTgr(ArrayUtils.addAll(httpRequest, payload)),
+
+    Files.write(Path.of(TGR_FILENAME), makeTgr(ArrayUtils.addAll(httpRequest, payload)),
       StandardOpenOption.CREATE, StandardOpenOption.APPEND);
   }
 
@@ -202,7 +219,7 @@ class VauHandshakeTest {
                           + additionalHeaders
                           + "Content-Type: application/cbor\r\n"
                           + "Content-Length: " + payload.length + "\r\n\r\n").getBytes();
-    Files.write(Path.of("target/vau3Traffic.tgr"),
+    Files.write(Path.of(TGR_FILENAME),
       makeTgr(ArrayUtils.addAll(httpRequest, payload)),
       StandardOpenOption.CREATE, StandardOpenOption.APPEND);
   }
