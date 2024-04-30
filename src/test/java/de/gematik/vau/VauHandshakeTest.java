@@ -53,7 +53,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.time.Duration;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -179,9 +181,6 @@ class VauHandshakeTest {
   KeyPair getKyberFixedKeypair() throws NoSuchAlgorithmException, InvalidKeySpecException {
     String keyType = "KYBER";
     KeyFactory keyFactory = KeyFactory.getInstance(keyType, new BouncyCastlePQCProvider());
-
-    RawEncodedKeySpec rawPublic = new RawEncodedKeySpec(Hex.decode(KyberPublicKey));
-    RawEncodedKeySpec rawPrivate = new RawEncodedKeySpec(Hex.decode(KyberPrivateKey));
 
     X509EncodedKeySpec kyberPubKey = new X509EncodedKeySpec(Hex.decode(KyberPublicKeyEncodingHeader + KyberPublicKey), keyType);
     PKCS8EncodedKeySpec kyberPrivKey = new PKCS8EncodedKeySpec(Hex.decode(KyberPrivateKeyEncodingHeader + KyberPrivateKey), keyType);
