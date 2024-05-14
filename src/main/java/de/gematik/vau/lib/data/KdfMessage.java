@@ -31,11 +31,11 @@ public class KdfMessage {
   private final byte[] kyberSharedSecret;
 
   public KdfMessage(VauEccPublicKey ecdhCt, byte[] ecdhSharedSecret, byte[] kyberCt,
-    byte[] sharedSecretClient) {
+    byte[] kyberSharedSecret) {
     this.ecdhCt = ecdhCt;
     ecdhPrivateKey = null;
     this.ecdhSharedSecret = ecdhSharedSecret;
     this.kyberCt = kyberCt;
-    this.kyberSharedSecret = sharedSecretClient;
+    this.kyberSharedSecret = kyberSharedSecret;
   }
 }

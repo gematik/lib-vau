@@ -2,6 +2,28 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.8
+### fixed
+- Added workaround in to Kyber key generation be compliant with Kyber Release v3.0.2
+  this due to FIPS 203 draft implementation in BouncyCastle which is incompatible with the current release
+
+## Release 1.0.7
+### added
+- tests for Shared Secrets Length/Signing in EllipticCurve.getSharedSecret()
+
+### fixed
+- Fixed Kyber key encoding (remove ASN.1 Prelude) in VauBasicPublicKey.toKyberPublicKey()
+
+## Release 1.0.6
+### added
+- pullFromGitHubToGitLab.jenkinsfile
+
+### changed
+- integrated test better into tiger
+
+### fixed
+- Shared Secrets Length/Signing in EllipticCurve.getSharedSecret()
+
 ## Release 1.0.5
 ### fixed
 - Updated .gitignore

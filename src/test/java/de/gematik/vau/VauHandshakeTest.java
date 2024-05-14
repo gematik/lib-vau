@@ -17,6 +17,7 @@
 package de.gematik.vau;
 
 
+import static org.assertj.core.api.Assertions.assertThat;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.VauClientStateMachine;
@@ -24,27 +25,6 @@ import de.gematik.vau.lib.VauServerStateMachine;
 import de.gematik.vau.lib.data.EccKyberKeyPair;
 import de.gematik.vau.lib.data.SignedPublicVauKeys;
 import de.gematik.vau.lib.data.VauPublicKeys;
-import lombok.SneakyThrows;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.bouncycastle.asn1.ASN1InputStream;
-import org.bouncycastle.asn1.ASN1Primitive;
-import org.bouncycastle.asn1.ASN1Sequence;
-import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.DLSequence;
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPrivateKey;
-import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPublicKey;
-import org.bouncycastle.util.encoders.Base64;
-import org.bouncycastle.util.io.pem.PemObject;
-import org.junit.jupiter.api.Test;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -56,9 +36,25 @@ import java.time.Duration;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
+import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPrivateKey;
+import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPublicKey;
+import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.Hex;
+import org.bouncycastle.util.io.pem.PemObject;
+import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
+@Slf4j
 class VauHandshakeTest {
 
   private static final int KYBER_768_BYTE_LENGTH = 1184;
@@ -80,15 +76,15 @@ class VauHandshakeTest {
     PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(
       Files.readAllBytes(Path.of("src/test/resources/vau-sig-key.der")));
     PrivateKey serverAutPrivateKey = keyFactory.generatePrivate(privateSpec);
-    final EccKyberKeyPair serverVauKeyPair = EccKyberKeyPair.generateRandom();
+    final EccKyberKeyPair serverVauKeyPair = EccKyberKeyPair.readFromFile(Path.of("src/test/resources/vau_server_keys.cbor"));
     final VauPublicKeys serverVauKeys = new VauPublicKeys(serverVauKeyPair, "VAU Server Keys", Duration.ofDays(30));
     var signedPublicVauKeys = SignedPublicVauKeys.sign(
       Files.readAllBytes(Path.of("src/test/resources/vau_sig_cert.der")), serverAutPrivateKey,
       Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
       1, serverVauKeys);
 
-    assertThat(serverVauKeyPair.getEccKeyPair().getPublic().getAlgorithm()).isEqualTo("ECDH");
-    assertThat(serverVauKeyPair.getEccKeyPair().getPrivate().getAlgorithm()).isEqualTo("ECDH");
+    assertThat(serverVauKeyPair.getEccKeyPair().getPublic().getAlgorithm()).startsWith("EC");
+    assertThat(serverVauKeyPair.getEccKeyPair().getPrivate().getAlgorithm()).startsWith("EC");
 
     assertThat(assertPublicKeyAlgorithm(serverVauKeyPair.getEccKeyPair().getPublic())).isTrue();
     assertThat(assertPrivateKeyAlgorithm(serverVauKeyPair.getEccKeyPair().getPrivate())).isTrue();
@@ -114,7 +110,10 @@ class VauHandshakeTest {
     final JsonNode message2Tree = new CBORMapper().readTree(message2Encoded);
     assertThat(message2Tree.get("MessageType").textValue()).isEqualTo("M2");
     assertThat(message2Tree.get("Kyber768_ct").binaryValue()).hasSize(1088);
-    assertThat(message2Tree.get("AEAD_ct").binaryValue()).hasSizeBetween(1000, 2000);
+    log.debug("AEAD_ct length: {}", message2Tree.get("AEAD_ct").binaryValue().length);
+    assertThat(message2Tree.get("AEAD_ct").binaryValue()).hasSizeBetween(1550, 1557);
+    log.debug("x: {}", Hex.toHexString(message1Tree.get("ECDH_PK").get("x").binaryValue()));
+    log.debug("y: {}", Hex.toHexString(message1Tree.get("ECDH_PK").get("y").binaryValue()));
 
     final byte[] message3Encoded = client.receiveMessage2(message2Encoded);
 
@@ -154,11 +153,7 @@ class VauHandshakeTest {
 
   @SneakyThrows
   private static boolean containsKyberEncodedOfLength(byte[] encoded) {
-    final ASN1InputStream asn1InputStream = new ASN1InputStream(new ByteArrayInputStream(encoded));
-    final ASN1Primitive object = asn1InputStream.readObject();
-    final ASN1Primitive secondParameterASN1Primitive = ((DLSequence) object).getObjectAt(1).toASN1Primitive();
-    final byte[] secondParameter = ((DERBitString) secondParameterASN1Primitive).getOctets();
-    return secondParameter.length == KYBER_768_BYTE_LENGTH;
+    return encoded.length == KYBER_768_BYTE_LENGTH;
   }
 
   private static boolean assertPublicKeyAlgorithm(PublicKey key) {

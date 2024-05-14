@@ -98,6 +98,10 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
 
     kemResult1 = KEM.encapsulateMessage(vauMessage1.getEcdhPublicKey().toEcPublicKey(),
       vauMessage1.toKyberPublicKey());
+    if (log.isTraceEnabled()) {
+      log.trace("ecdh_shared_secret: (hexdump) {}", Hex.toHexString(kemResult1.getEcdhSharedSecret()));
+      log.trace("Kyber768_shared_secret: (hexdump) {}", Hex.toHexString(kemResult1.getKyberSharedSecret()));
+    }
     KdfKey1 kdfServerKey1 = KEM.kdf(kemResult1);
     c2s = kdfServerKey1.getClientToServer();
     s2c = kdfServerKey1.getServerToClient();
@@ -189,9 +193,8 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
     verifyEccPublicKey(vauMessage1.getEcdhPublicKey());
     try {
       vauMessage1.toKyberPublicKey();
-    }
-    catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeySpecException e) {
-      throw new IllegalArgumentException("Kyber Public Key Bytes in VAU Message 1 are not well formed. " + e.getMessage());
+    } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidKeySpecException e) {
+      throw new IllegalArgumentException("Kyber Public Key Bytes in VAU Message 1 are not well formed.", e);
     }
   }
 }

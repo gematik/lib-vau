@@ -29,12 +29,16 @@ import de.gematik.vau.lib.exceptions.VauKyberCryptoException;
 import de.gematik.vau.lib.exceptions.VauServerException;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
+import org.bouncycastle.util.BigIntegers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
@@ -43,11 +47,11 @@ import java.time.Duration;
 import java.util.Arrays;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mockStatic;
 
 class ExceptionTest {
-
     @BeforeEach
     public void removeBCProviders() {
         removeBCProvider(new BouncyCastlePQCProvider());
@@ -253,7 +257,7 @@ class ExceptionTest {
     @SneakyThrows
     @Test
     void testKdfMessage2Null() {
-        byte[] someSecret = new byte[3];
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
         KdfMessage kdfMessage1 = new KdfMessage(null, someSecret, null, someSecret);
         assertThatThrownBy(() -> KEM.kdf(kdfMessage1, null)).isInstanceOf(IllegalArgumentException.class).hasMessage("Kdf Message 2 was null.");
     }
@@ -261,7 +265,7 @@ class ExceptionTest {
     @SneakyThrows
     @Test
     void testKdfMessage1EcdhSharedSecretNull() {
-        byte[] someSecret = new byte[3];
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
         KdfMessage kdfMessage1 = new KdfMessage(null, null, null, someSecret);
         KdfMessage kdfMessage2 = new KdfMessage(null, someSecret, null, someSecret);
         assertThatThrownBy(() -> KEM.kdf(kdfMessage1, kdfMessage2)).isInstanceOf(IllegalArgumentException.class).hasMessage("Ecdh Shared Secret of Message 1 was null.");
@@ -269,8 +273,17 @@ class ExceptionTest {
 
     @SneakyThrows
     @Test
+    void testKdfMessage1EcdhSharedSecretIllegalLength() {
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
+        KdfMessage kdfMessage1 = new KdfMessage(null, BigInteger.valueOf(1000).toByteArray(), null, someSecret);
+        KdfMessage kdfMessage2 = new KdfMessage(null, someSecret, null, someSecret);
+        assertThatThrownBy(() -> KEM.kdf(kdfMessage1, kdfMessage2)).isInstanceOf(IllegalArgumentException.class).hasMessage("Length of Ecdh Shared Secret of Message 1 must be 32.");
+    }
+
+    @SneakyThrows
+    @Test
     void testKdfMessage1KyberSharedSecretNull() {
-        byte[] someSecret = new byte[3];
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
         KdfMessage kdfMessage1 = new KdfMessage(null, someSecret, null, null);
         KdfMessage kdfMessage2 = new KdfMessage(null, someSecret, null, someSecret);
         assertThatThrownBy(() -> KEM.kdf(kdfMessage1, kdfMessage2)).isInstanceOf(IllegalArgumentException.class).hasMessage("Kyber Shared Secret of Message 1 was null.");
@@ -279,7 +292,7 @@ class ExceptionTest {
     @SneakyThrows
     @Test
     void testKdfMessage2EcdhSharedSecretNull() {
-        byte[] someSecret = new byte[3];
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
         KdfMessage kdfMessage1 = new KdfMessage(null, someSecret, null, someSecret);
         KdfMessage kdfMessage2 = new KdfMessage(null, null, null, someSecret);
         assertThatThrownBy(() -> KEM.kdf(kdfMessage1, kdfMessage2)).isInstanceOf(IllegalArgumentException.class).hasMessage("Ecdh Shared Secret of Message 2 was null.");
@@ -287,11 +300,65 @@ class ExceptionTest {
 
     @SneakyThrows
     @Test
+    void testKdfMessage2EcdhSharedSecretIllegalLength() {
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
+        byte[] illegalLength = BigInteger.valueOf(1000).toByteArray();
+        KdfMessage kdfMessage1 = new KdfMessage(null, someSecret, null, someSecret);
+        KdfMessage kdfMessage2 = new KdfMessage(null, illegalLength, null, someSecret);
+        assertThatThrownBy(() -> KEM.kdf(kdfMessage1, kdfMessage2)).isInstanceOf(IllegalArgumentException.class).hasMessage("Length of Ecdh Shared Secret of Message 2 must be 32.");
+    }
+
+    @SneakyThrows
+    @Test
     void testKdfMessage2KyberSharedSecretNull() {
-        byte[] someSecret = new byte[3];
+        byte[] someSecret = BigIntegers.asUnsignedByteArray(32, BigInteger.valueOf(1000));
         KdfMessage kdfMessage1 = new KdfMessage(null, someSecret, null, someSecret);
         KdfMessage kdfMessage2 = new KdfMessage(null, someSecret, null, null);
         assertThatThrownBy(() -> KEM.kdf(kdfMessage1, kdfMessage2)).isInstanceOf(IllegalArgumentException.class).hasMessage("Kyber Shared Secret of Message 2 was null.");
+    }
+    @Test
+    void testReceiveMessage2CborExceptionMessage() {
+        byte[] whatever = new byte[0];
+        VauClientStateMachine client = new VauClientStateMachine();
+        assertThatThrownBy(() -> client.receiveMessage2(whatever)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not CBOR decode Message 2 when receiving it at client. ");
+    }
+
+    @Test
+    void testReceiveMessage4CborExceptionMessage() {
+        byte[] whatever = new byte[0];
+        VauClientStateMachine client = new VauClientStateMachine();
+        assertThatThrownBy(() -> client.receiveMessage4(whatever)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not CBOR decode Message 4 when receiving it at client. ");
+    }
+
+    @Test
+    @SneakyThrows
+    void testEllipticCurveGetSharedSecret() {
+        Security.addProvider(new BouncyCastlePQCProvider());
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+
+        KeyFactory keyFactory = KeyFactory.getInstance("EC", "SunEC");
+        PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(
+                Files.readAllBytes(Path.of("src/test/resources/vau-sig-key.der")));
+        PrivateKey serverAutPrivateKey = keyFactory.generatePrivate(privateSpec);
+        final EccKyberKeyPair serverVauKeyPair = EccKyberKeyPair.generateRandom();
+        final VauPublicKeys serverVauKeys = new VauPublicKeys(serverVauKeyPair, "VAU Server Keys", Duration.ofDays(30));
+        var signedPublicVauKeys = SignedPublicVauKeys.sign(
+                Files.readAllBytes(Path.of("src/test/resources/vau_sig_cert.der")), serverAutPrivateKey,
+                Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
+                1, serverVauKeys);
+
+        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+        VauClientStateMachine client = new VauClientStateMachine();
+        final byte[] message1Encoded = client.generateMessage1();
+
+        BigInteger illegalBigInteger = BigInteger.valueOf(1000);
+        byte[] illegalBigIntegerBytes = illegalBigInteger.toByteArray();
+
+        try (MockedStatic<EllipticCurve> utilities = mockStatic(EllipticCurve.class, Mockito.CALLS_REAL_METHODS)) {
+            utilities.when(() -> EllipticCurve.getSharedSecret(any(ECPublicKey.class), any(ECPrivateKey.class)))
+                    .thenReturn(illegalBigIntegerBytes);
+            assertDoesNotThrow(() -> server.receiveMessage(message1Encoded));
+        }
     }
 
     private void removeBCProvider(Provider provider) {
@@ -304,17 +371,4 @@ class ExceptionTest {
         }
     }
 
-    @Test
-    public void testReceiveMessage2CborExceptionMessage() {
-        byte[] whatever = new byte[0];
-        VauClientStateMachine client = new VauClientStateMachine();
-        assertThatThrownBy(() -> client.receiveMessage2(whatever)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not CBOR decode Message 2 when receiving it at client. ");
-    }
-
-    @Test
-    public void testReceiveMessage4CborExceptionMessage() {
-        byte[] whatever = new byte[0];
-        VauClientStateMachine client = new VauClientStateMachine();
-        assertThatThrownBy(() -> client.receiveMessage4(whatever)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Could not CBOR decode Message 4 when receiving it at client. ");
-    }
 }

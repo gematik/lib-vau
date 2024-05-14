@@ -18,8 +18,8 @@ package de.gematik.vau.lib.exceptions;
 
 public class VauDecryptionException extends RuntimeException {
 
-    public VauDecryptionException(String message) {
-        super(message);
+    public VauDecryptionException(String message, Throwable t) {
+        super(message, t);
     }
 
 }

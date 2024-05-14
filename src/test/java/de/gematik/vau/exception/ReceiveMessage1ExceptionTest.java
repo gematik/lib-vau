@@ -119,7 +119,9 @@ class ReceiveMessage1ExceptionTest {
 
         CBORMapper cborMapper = new CBORMapper();
         byte[] message1Encoded = cborMapper.writeValueAsBytes(vauMessage1);
-        assertThatThrownBy(() -> server.receiveMessage(message1Encoded)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Kyber Public Key Bytes in VAU Message 1 are not well formed.");
+        assertThatThrownBy(() -> server.receiveMessage(message1Encoded))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Kyber Public Key Bytes in VAU Message 1 are not well formed.");
     }
 
     private static VauMessage1 setVauMessage1EccPublicKey(VauEccPublicKey eccPublicKey)

@@ -19,20 +19,25 @@ package de.gematik.vau.lib.crypto;
 import de.gematik.vau.lib.exceptions.VauKyberCryptoException;
 import java.security.*;
 import javax.crypto.KeyGenerator;
+import javax.crypto.spec.SecretKeySpec;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
+import org.bouncycastle.crypto.digests.SHA3Digest;
+import org.bouncycastle.crypto.digests.SHAKEDigest;
 import org.bouncycastle.jcajce.SecretKeyWithEncapsulation;
 import org.bouncycastle.jcajce.spec.KEMExtractSpec;
 import org.bouncycastle.jcajce.spec.KEMGenerateSpec;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec;
 
+@Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class KyberEncoding {
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
   private static final String BC_PQC_PROVIDER = BouncyCastlePQCProvider.PROVIDER_NAME;
   private static final String ALGORITHM = "KYBER";
-
-  private KyberEncoding() {
-    // Prevent instantiation by making the constructor private
-  }
 
   /**
    * Generate a Kyber KeyPair
@@ -58,7 +63,16 @@ public class KyberEncoding {
     try {
       var keyGen = KeyGenerator.getInstance(ALGORITHM, BC_PQC_PROVIDER);
       keyGen.init(new KEMGenerateSpec(publicKey, "AES"), SECURE_RANDOM);
-      return (SecretKeyWithEncapsulation) keyGen.generateKey();
+
+      final var bcResult = (SecretKeyWithEncapsulation) keyGen.generateKey();
+      byte[] ct = bcResult.getEncapsulation();
+      byte[] sharedSecret = bcResult.getEncoded();
+
+      // This trick is necessary since BouncyCastle does not implement Kyber versio 3.0.2, but rather the current draft
+      // The trick is derived from https://words.filippo.io/dispatches/mlkem768/#bonus-track-using-a-ml-kem-implementation-as-kyber-v3
+      byte[] resultSecret = ArrayUtils.subarray(shake256(ArrayUtils.addAll(sharedSecret, shaThree256(ct))), 0, 32);
+
+      return new SecretKeyWithEncapsulation(new SecretKeySpec(resultSecret, bcResult.getAlgorithm()), ct);
     } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
       throw new VauKyberCryptoException("Error while generating kyber encryption key", e);
     }
@@ -67,17 +81,36 @@ public class KyberEncoding {
   /**
    * Generates a shared secret using a Kyber PrivateKey and a binary encapsulated key
    * @param privateKey the private key
-   * @param encapsulatedKey the encapsulated key
+   * @param ct the encapsulated key
    * @return the shared secret
    */
-  public static byte[] pqcGenerateDecryptionKey(PrivateKey privateKey, byte[] encapsulatedKey) {
+  public static byte[] pqcGenerateDecryptionKey(PrivateKey privateKey, byte[] ct) {
     try {
       var keyGen = KeyGenerator.getInstance(ALGORITHM, BC_PQC_PROVIDER);
-      keyGen.init(new KEMExtractSpec(privateKey, encapsulatedKey, "AES"), SECURE_RANDOM);
+      keyGen.init(new KEMExtractSpec(privateKey, ct, "AES"), SECURE_RANDOM);
       SecretKeyWithEncapsulation secEnc2 = (SecretKeyWithEncapsulation) keyGen.generateKey();
-      return secEnc2.getEncoded();
+
+      // This trick is necessary since BouncyCastle does not implement Kyber versio 3.0.2, but rather the current draft
+      // The trick is derived from https://words.filippo.io/dispatches/mlkem768/#bonus-track-using-a-ml-kem-implementation-as-kyber-v3
+      return ArrayUtils.subarray(shake256(ArrayUtils.addAll(secEnc2.getEncoded(), shaThree256(ct))), 0, 32);
     } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
       throw new VauKyberCryptoException("Error while generating kyber decryption key", e);
     }
+  }
+
+  private static byte[] shake256(byte[] input) {
+    byte[] result = new byte[64];
+    final SHAKEDigest digest = new SHAKEDigest(256);
+    digest.update(input, 0, input.length);
+    digest.doFinal(result, 0, 64);
+    return result;
+  }
+
+  private static byte[] shaThree256(byte[] input) {
+    byte[] result = new byte[32];
+    final SHA3Digest digest = new SHA3Digest(256);
+    digest.update(input, 0, input.length);
+    digest.doFinal(result, 0);
+    return result;
   }
 }
