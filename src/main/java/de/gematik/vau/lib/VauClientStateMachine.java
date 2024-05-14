@@ -20,7 +20,11 @@ package de.gematik.vau.lib;
 import de.gematik.vau.lib.crypto.KEM;
 import de.gematik.vau.lib.data.*;
 import de.gematik.vau.lib.exceptions.VauEncryptionException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -49,7 +53,9 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
    */
   @SneakyThrows
   public byte[] generateMessage1() {
-    clientKey1 = EccKyberKeyPair.generateRandom();
+    if (clientKey1 == null) {
+      clientKey1 = EccKyberKeyPair.generateRandom();
+    }
     VauMessage1 message1 = new VauMessage1(clientKey1);
     byte[] message1Encoded = encodeUsingCbor(message1);
 
@@ -84,9 +90,8 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
     SignedPublicVauKeys signedPublicVauKeys;
     try{
       signedPublicVauKeys = decodeCborMessageToClass(transferredSignedServerPublicKey, SignedPublicVauKeys.class);
-    }
-    catch (Exception e) {
-      throw new IllegalArgumentException("Could not CBOR decode Signed Server Public Keys when receiving it at client. " + e.getMessage());
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Could not CBOR decode Signed Server Public Keys when receiving it at client.", e);
     }
 
     VauPublicKeys transferredSignedServerPublicKeyList = signedPublicVauKeys.extractVauKeys();
@@ -147,7 +152,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
       return super.encryptVauMessage(cleartext);
     }
     catch (IllegalArgumentException | VauEncryptionException e) {
-      throw new VauEncryptionException("Exception thrown whilst trying to encrypt VAU message. " + e.getMessage());
+      throw new VauEncryptionException("Exception thrown whilst trying to encrypt VAU message. ", e);
     }
   }
 
@@ -179,9 +184,8 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
     verifyEccPublicKey(eccPublicKey);
     try {
       kyberPublicKey.toKyberPublicKey();
-    }
-    catch (Exception e) {
-      throw new IllegalArgumentException("Kyber Public Key Bytes in VAU Message 1 are not well formed. " + e.getMessage());
+    } catch (RuntimeException | NoSuchAlgorithmException | NoSuchProviderException | InvalidKeySpecException e) {
+      throw new IllegalArgumentException("Kyber Public Key Bytes in VAU Message 1 are not well formed.", e);
     }
   }
 }

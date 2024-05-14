@@ -16,6 +16,7 @@
 
 package de.gematik.vau.lib;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -23,6 +24,8 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.data.*;
 import de.gematik.vau.lib.exceptions.VauDecryptionException;
 import de.gematik.vau.lib.exceptions.VauEncryptionException;
+import java.security.GeneralSecurityException;
+import java.time.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -36,7 +39,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
-import java.time.Instant;
 import java.util.Date;
 
 import static de.gematik.vau.lib.util.ArrayUtils.unionByteArrays;
@@ -46,7 +48,9 @@ import static de.gematik.vau.lib.util.ArrayUtils.unionByteArrays;
 @Slf4j
 public abstract class AbstractVauStateMachine {
 
-  private static final CBORMapper cborMapper = new CBORMapper();
+  private static final CBORMapper cborMapper = CBORMapper.builder()
+    .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    .build();
   private static final ObjectMapper objectMapper = new ObjectMapper()
     .enable(SerializationFeature.INDENT_OUTPUT);
   private static final int MINIMUM_CIPHERTEXT_LENGTH = 1 + 1 + 1 + 8 + 32 + 12 + 1 + 16; //A_24628
@@ -59,8 +63,11 @@ public abstract class AbstractVauStateMachine {
 
   @SneakyThrows
   byte[] encodeUsingCbor(Object value) {
-    log.info("Encoding message: {}", objectMapper.writeValueAsString(value));
-    return cborMapper.writeValueAsBytes(value);
+    final byte[] bytes = cborMapper.writeValueAsBytes(value);
+    if (log.isDebugEnabled()) {
+      log.debug("Encoding message \n{}\nto\n{}", objectMapper.writeValueAsString(value), Hex.toHexString(bytes));
+    }
+    return bytes;
   }
 
   @SneakyThrows
@@ -81,12 +88,13 @@ public abstract class AbstractVauStateMachine {
 
   @SneakyThrows
   <T> T decodeCborMessageToClass(byte[] encodedMessage, Class<T> clazz) {
-      return cborMapper.readerFor(clazz).readValue(encodedMessage);
+    return cborMapper.readerFor(clazz).readValue(encodedMessage);
   }
 
   /**
-   * encrypts a message to be sent; handshake has to be completed successfully; described in detail in
-   * gemSpec_Krypt A_24628
+   * encrypts a message to be sent; handshake has to be completed successfully; described in detail in gemSpec_Krypt
+   * A_24628
+   *
    * @param cleartext text be encrypted
    * @return the ciphertext
    */
@@ -121,18 +129,21 @@ public abstract class AbstractVauStateMachine {
   @SneakyThrows
   private byte[] encryptWithAesGcm(byte[] vauKey, byte[] iv, byte[] cleartext, byte[] associatedData) {
     Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding"); // NOSONAR
-    cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(vauKey, "AES"), new GCMParameterSpec(AUTHENTICATION_TAG_BIT_SIZE, iv));
+    cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(vauKey, "AES"),
+      new GCMParameterSpec(AUTHENTICATION_TAG_BIT_SIZE, iv));
     cipher.updateAAD(associatedData);
-    byte [] ciphertext = cipher.doFinal(cleartext);
-    if(ciphertext.length != cleartext.length + AUTHENTICATION_TAG_BIT_SIZE/Byte.SIZE) {
-      throw new VauEncryptionException(String.format("Calculated Authentication tag must be %s Bytes, but it was %s Bytes.", AUTHENTICATION_TAG_BIT_SIZE/Byte.SIZE, ciphertext.length - cleartext.length));
+    byte[] ciphertext = cipher.doFinal(cleartext);
+    if (ciphertext.length != cleartext.length + AUTHENTICATION_TAG_BIT_SIZE / Byte.SIZE) {
+      throw new VauEncryptionException(
+        String.format("Calculated Authentication tag must be %s Bytes, but it was %s Bytes.",
+          AUTHENTICATION_TAG_BIT_SIZE / Byte.SIZE, ciphertext.length - cleartext.length));
     }
     return ciphertext;
   }
 
-  @SneakyThrows
-  private byte[] decryptWithAesGcm(byte[] secretKey, byte[] iv, byte[] cipherText, byte[] header) {
-    if(iv.length != 12) {
+  private byte[] decryptWithAesGcm(byte[] secretKey, byte[] iv, byte[] cipherText, byte[] header)
+    throws GeneralSecurityException {
+    if (iv.length != 12) {
       throw new IllegalArgumentException("Length of IV must be 12 Bytes.");
     }
 
@@ -145,14 +156,16 @@ public abstract class AbstractVauStateMachine {
         Hex.toHexString(header));
     }
     Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding"); // NOSONAR
-    cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(secretKey, "AES"), new GCMParameterSpec(AUTHENTICATION_TAG_BIT_SIZE, iv));
+    cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(secretKey, "AES"),
+      new GCMParameterSpec(AUTHENTICATION_TAG_BIT_SIZE, iv));
     cipher.updateAAD(header);
     return cipher.doFinal(cipherText);
   }
 
   /**
-   * Decrypts a received message; handshake has to be completed successfully; described in detail in
-   * gemSpec_Krypt A_24628
+   * Decrypts a received message; handshake has to be completed successfully; described in detail in gemSpec_Krypt
+   * A_24628
+   *
    * @param ciphertext the to be decrypted message
    * @return the resulting plaintext
    */
@@ -178,7 +191,7 @@ public abstract class AbstractVauStateMachine {
     checkRequestCounter(reqCtr);
 
     byte[] keyId = ArrayUtils.subarray(header, 11, header.length);
-    if(!validateKeyId(keyId)) {
+    if (!validateKeyId(keyId)) {
       throw new IllegalArgumentException("Key ID in the header is not correct");
     }
 
@@ -186,9 +199,8 @@ public abstract class AbstractVauStateMachine {
     byte[] ct = ArrayUtils.subarray(ciphertext, 55, ciphertext.length);
     try {
       return decryptWithAesGcm(decryptionVauKey, iv, ct, header);
-    }
-    catch (Exception e) {
-      throw new VauDecryptionException("Exception thrown whilst trying to decrypt VAU message. " + e.getMessage());
+    } catch (GeneralSecurityException e) {
+      throw new VauDecryptionException("Exception thrown whilst trying to decrypt VAU message.", e);
     }
   }
 
@@ -200,20 +212,28 @@ public abstract class AbstractVauStateMachine {
 
   protected static void checkCertificateExpired(int exp) throws CertificateException {
     Instant now = new Date().toInstant();
-    if(exp < now.getEpochSecond()) {
-      throw new CertificateException("The server certificate has expired.");
+    if (exp < now.getEpochSecond()) {
+      throw new CertificateException("The server certificate has expired. (exp: "
+                                     + ZonedDateTime.ofInstant(Instant.ofEpochSecond(exp), ZoneId.systemDefault())
+                                     + ")");
     }
   }
 
   protected void verifyEccPublicKey(VauEccPublicKey eccPublicKey) {
-    if(!eccPublicKey.getCrv().equals("P-256")) {
-      throw new IllegalArgumentException("CRV Value of ECDH Public Key in VAU Message 1 must be 'P-256'. Actual value is '%s'".formatted(eccPublicKey.getCrv()));
+    if (!eccPublicKey.getCrv().equals("P-256")) {
+      throw new IllegalArgumentException(
+        "CRV Value of ECDH Public Key in VAU Message 1 must be 'P-256'. Actual value is '" + eccPublicKey.getCrv()
+        + "'");
     }
-    if(eccPublicKey.getX().length != 32) {
-      throw new IllegalArgumentException("Length of X Value of ECDH Public Key in VAU Message 1 must be 32. Actual length is '%s'".formatted(eccPublicKey.getX().length));
+    if (eccPublicKey.getX().length != 32) {
+      throw new IllegalArgumentException(
+        "Length of X Value of ECDH Public Key in VAU Message 1 must be 32. Actual length is '"
+        + eccPublicKey.getX().length + "'");
     }
-    if(eccPublicKey.getY().length != 32) {
-      throw new IllegalArgumentException("Length of Y Value of ECDH Public Key in VAU Message 1 must be 32. Actual length is '%s'".formatted(eccPublicKey.getY().length));
+    if (eccPublicKey.getY().length != 32) {
+      throw new IllegalArgumentException(
+        "Length of Y Value of ECDH Public Key in VAU Message 1 must be 32. Actual length is '%s'"
+        + eccPublicKey.getY().length + "'");
     }
   }
 }

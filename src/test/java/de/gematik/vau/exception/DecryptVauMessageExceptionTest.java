@@ -24,6 +24,7 @@ import de.gematik.vau.lib.data.SignedPublicVauKeys;
 import de.gematik.vau.lib.data.VauPublicKeys;
 import de.gematik.vau.lib.exceptions.VauDecryptionException;
 import de.gematik.vau.lib.exceptions.VauEncryptionException;
+import javax.crypto.AEADBadTagException;
 import lombok.SneakyThrows;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,13 +83,17 @@ class DecryptVauMessageExceptionTest {
     @Test
     void testIllegalLengthException() {
         byte[] sizeNotLongEnough = new byte[4];
-        assertThatThrownBy(() -> server.decryptVauMessage(sizeNotLongEnough)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Invalid ciphertext length");
+        assertThatThrownBy(() -> server.decryptVauMessage(sizeNotLongEnough))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Invalid ciphertext length");
     }
 
     @Test
     void testIllegalVersionByteException() {
         byte[] wrongHeaderByte = new byte[72];
-        assertThatThrownBy(() -> server.decryptVauMessage(wrongHeaderByte)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Invalid version byte");
+        assertThatThrownBy(() -> server.decryptVauMessage(wrongHeaderByte))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Invalid version byte");
     }
 
     @Test
@@ -96,7 +101,9 @@ class DecryptVauMessageExceptionTest {
         byte[] wrongPUByte = new byte[72];
         wrongPUByte[0] = 2;
         wrongPUByte[1] = 1;
-        assertThatThrownBy(() -> server.decryptVauMessage(wrongPUByte)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Invalid PU byte");
+        assertThatThrownBy(() -> server.decryptVauMessage(wrongPUByte))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Invalid PU byte");
     }
 
     @Test
@@ -105,7 +112,9 @@ class DecryptVauMessageExceptionTest {
         simplyNotAValidCiphertext[0] = 2;
         simplyNotAValidCiphertext[2] = 1;
 
-        assertThatThrownBy(() -> server.decryptVauMessage(simplyNotAValidCiphertext)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Key ID in the header is not correct");
+        assertThatThrownBy(() -> server.decryptVauMessage(simplyNotAValidCiphertext))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Key ID in the header is not correct");
     }
 
     @Test
@@ -116,6 +125,8 @@ class DecryptVauMessageExceptionTest {
         byte[] clientKeyId = client.getClientKey2().getKeyId();
 
         System.arraycopy(clientKeyId, 0, onlyHeaderValid, 11, 32);
-        assertThatThrownBy(() -> server.decryptVauMessage(onlyHeaderValid)).isInstanceOf(VauDecryptionException.class).hasMessageContaining("Exception thrown whilst trying to decrypt VAU message");
+        assertThatThrownBy(() -> server.decryptVauMessage(onlyHeaderValid))
+          .isInstanceOf(VauDecryptionException.class)
+          .hasMessageContaining("Exception thrown whilst trying to decrypt VAU message");
     }
 }
