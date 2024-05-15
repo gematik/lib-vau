@@ -2,6 +2,10 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.9
+### fixed
+- Corrected the order of S2C and C2S keys in the KeyDerivation in the first key derivation.
+
 ## Release 1.0.8
 ### fixed
 - Added workaround in to Kyber key generation be compliant with Kyber Release v3.0.2
