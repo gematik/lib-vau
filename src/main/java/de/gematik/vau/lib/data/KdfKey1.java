@@ -20,6 +20,6 @@ import lombok.Value;
 
 @Value
 public class KdfKey1 {
-    byte[] serverToClient;
     byte[] clientToServer;
+    byte[] serverToClient;
 }
