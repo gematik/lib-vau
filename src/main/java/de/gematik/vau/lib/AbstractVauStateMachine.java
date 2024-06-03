@@ -102,7 +102,7 @@ public abstract class AbstractVauStateMachine {
     byte versionByte = 2;
     byte puByte = 0;
     byte reqByte = getRequestByte();
-    byte[] reqCtrBytes = ByteBuffer.allocate(8).putInt(getRequestCounter()).array();
+    byte[] reqCtrBytes = ByteBuffer.allocate(8).putLong(getRequestCounter()).array();
     byte[] header = unionByteArrays(versionByte, puByte, reqByte, reqCtrBytes, getKeyId());
 
     byte[] a = new byte[4];
@@ -122,7 +122,7 @@ public abstract class AbstractVauStateMachine {
     return bytes;
   }
 
-  protected abstract int getRequestCounter();
+  protected abstract long getRequestCounter();
 
   protected abstract byte getRequestByte();
 
@@ -186,12 +186,12 @@ public abstract class AbstractVauStateMachine {
     }
     byte reqByte = header[2];
     checkRequestByte(reqByte);
-    int reqCtr = ByteBuffer.wrap(ArrayUtils.subarray(header, 3, 3 + 8))
-      .getInt();
+    long reqCtr = ByteBuffer.wrap(ArrayUtils.subarray(header, 3, 3 + 8))
+      .getLong();
     checkRequestCounter(reqCtr);
 
-    byte[] keyId = ArrayUtils.subarray(header, 11, header.length);
-    if (!validateKeyId(keyId)) {
+    byte[] headerKeyId = ArrayUtils.subarray(header, 11, header.length);
+    if (!validateKeyId(headerKeyId)) {
       throw new IllegalArgumentException("Key ID in the header is not correct");
     }
 
@@ -204,7 +204,7 @@ public abstract class AbstractVauStateMachine {
     }
   }
 
-  protected abstract void checkRequestCounter(int reqCtr);
+  protected abstract void checkRequestCounter(long reqCtr);
 
   protected abstract void checkRequestByte(byte reqByte);
 

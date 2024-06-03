@@ -24,7 +24,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -45,7 +44,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
   private KdfKey1 kdfClientKey1;
   private KdfKey2 clientKey2;
   private byte[] transcriptClient = new byte[0];
-  private int requestCounter = 0;
+  private long requestCounter = 0;
 
   /**
    * Handshake Message 1: Generates Key Pairs, stores them in a Message1 and encodes it
@@ -146,6 +145,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
     }
   }
 
+  @Override
   public byte[] encryptVauMessage(byte[] cleartext) {
     try {
       requestCounter++;
@@ -162,7 +162,7 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
   }
 
   @Override
-  protected void checkRequestCounter(int reqCtr) {
+  protected void checkRequestCounter(long reqCtr) {
     if (reqCtr != getRequestCounter()) {
       throw new IllegalArgumentException("Invalid request counter. Expected " + (getRequestCounter() + 1) + ", got " + reqCtr);
     }

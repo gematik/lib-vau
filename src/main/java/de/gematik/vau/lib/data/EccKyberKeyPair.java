@@ -42,9 +42,9 @@ public class EccKyberKeyPair {
 
   private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
-  public static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER = Hex.decode(
+  protected static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER = Hex.decode(
     "308204B4300D060B2B0601040181B01A050602038204A100");
-  public static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER = Hex.decode(
+  protected static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER = Hex.decode(
     "3082097A020100300D060B2B0601040181B01A0506020482096404820960");
 
   @JsonIgnore

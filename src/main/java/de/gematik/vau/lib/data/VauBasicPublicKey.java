@@ -34,7 +34,6 @@ import org.bouncycastle.jce.interfaces.ECPublicKey;
 
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import org.bouncycastle.util.encoders.Hex;
 
 @Data
 @AllArgsConstructor

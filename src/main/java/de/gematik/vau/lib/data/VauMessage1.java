@@ -18,10 +18,12 @@ package de.gematik.vau.lib.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
 @Getter
+@EqualsAndHashCode(callSuper = true)
 public class VauMessage1 extends VauBasicPublicKey {
 
   @JsonProperty("MessageType")

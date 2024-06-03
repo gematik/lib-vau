@@ -2,6 +2,10 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.10
+### fixed
+- Corrected 8 byte request counter using type long (8 bytes) instead of type int (4 bytes)
+
 ## Release 1.0.9
 ### fixed
 - Corrected the order of S2C and C2S keys in the KeyDerivation in the first key derivation.

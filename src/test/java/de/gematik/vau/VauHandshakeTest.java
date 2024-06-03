@@ -76,7 +76,8 @@ class VauHandshakeTest {
     PKCS8EncodedKeySpec privateSpec = new PKCS8EncodedKeySpec(
       Files.readAllBytes(Path.of("src/test/resources/vau-sig-key.der")));
     PrivateKey serverAutPrivateKey = keyFactory.generatePrivate(privateSpec);
-    final EccKyberKeyPair serverVauKeyPair = EccKyberKeyPair.readFromFile(Path.of("src/test/resources/vau_server_keys.cbor"));
+    final EccKyberKeyPair serverVauKeyPair = EccKyberKeyPair.readFromFile(
+      Path.of("src/test/resources/vau_server_keys.cbor"));
     final VauPublicKeys serverVauKeys = new VauPublicKeys(serverVauKeyPair, "VAU Server Keys", Duration.ofDays(30));
     var signedPublicVauKeys = SignedPublicVauKeys.sign(
       Files.readAllBytes(Path.of("src/test/resources/vau_sig_cert.der")), serverAutPrivateKey,
@@ -131,6 +132,15 @@ class VauHandshakeTest {
 
     final byte[] encryptedServerVauMessage = server.encryptVauMessage("Right back at ya!".getBytes());
     final byte[] decryptedServerVauMessage = client.decryptVauMessage(encryptedServerVauMessage);
+    assertThat(encryptedClientVauMessage[0]).isEqualTo((byte) 2);
+    assertThat(encryptedClientVauMessage[1]).isEqualTo((byte) 0);
+    assertThat(encryptedClientVauMessage[2]).isEqualTo((byte) 1);
+    assertThat(ArrayUtils.subarray(encryptedClientVauMessage, 3, 3 +
+                                                                 8))
+      .isEqualTo(new byte[]{0, 0, 0, 0, 0, 0, 0, 1});
+    assertThat(ArrayUtils.subarray(encryptedClientVauMessage, 11, 11 + 32))
+      .isEqualTo(client.getKeyId());
+
     assertThat(decryptedServerVauMessage).isEqualTo("Right back at ya!".getBytes());
 
     bundleInHttpRequestAndWriteToFile("/vau", message1Encoded);
