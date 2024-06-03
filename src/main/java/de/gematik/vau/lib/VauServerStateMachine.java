@@ -48,7 +48,7 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
   private KdfMessage kemResult2;
   private byte[] serverTranscript;
   private KdfKey2 serverKey2;
-  private int clientRequestCounter;
+  private long clientRequestCounter;
   private static final int EXPIRATION_DAYS = 30;
 
   public VauServerStateMachine(SignedPublicVauKeys signedPublicVauKeys, EccKyberKeyPair serverVauKeys) {
@@ -163,7 +163,7 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
   }
 
   @Override
-  public int getRequestCounter() {
+  protected long getRequestCounter() {
     return clientRequestCounter;
   }
 
@@ -173,7 +173,7 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
   }
 
   @Override
-  protected void checkRequestCounter(int reqCtr) {
+  protected void checkRequestCounter(long reqCtr) {
     this.clientRequestCounter = reqCtr;
   }
 

@@ -21,9 +21,9 @@ import de.gematik.vau.lib.data.*;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
@@ -44,6 +44,7 @@ import org.bouncycastle.jce.interfaces.ECPublicKey;
 public class KEM {
   private static final int GCM_IV_LENGTH = 12; //A_24628
   private static final int GCM_TAG_LENGTH = 16; //A_24628
+  private static final SecureRandom RANDOM = new SecureRandom();
 
   /**
    * Generates the Shared secrets using own Private and the remote ciphertexts of VauMessage2
@@ -176,7 +177,7 @@ public class KEM {
         throw new IllegalArgumentException("Key length must be 32 bytes");
       }
       byte[] iv = new byte[GCM_IV_LENGTH];
-      ThreadLocalRandom.current().nextBytes(iv);
+      RANDOM.nextBytes(iv);
       GCMParameterSpec ivParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * Byte.SIZE, iv);
 
       SecretKey secretKey = new SecretKeySpec(key, "AES");
