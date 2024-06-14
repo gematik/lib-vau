@@ -32,9 +32,9 @@ public class EncryptionVauKey {
 
     public void countUp() {
         ByteBuffer byteBuffer = ByteBuffer.wrap(counter);
-        int newCount = byteBuffer.getInt() + 1;
+        long newCount = byteBuffer.getLong() + 1;
         byteBuffer = ByteBuffer.allocate(8);
-        byteBuffer.putInt(newCount);
+        byteBuffer.putLong(newCount);
         counter =  byteBuffer.array();
     }
 }
