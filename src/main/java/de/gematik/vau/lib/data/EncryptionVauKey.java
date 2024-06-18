@@ -18,23 +18,11 @@ package de.gematik.vau.lib.data;
 
 import lombok.Getter;
 
-import java.nio.ByteBuffer;
-
 @Getter
 public class EncryptionVauKey {
     private final byte[] appData;
-    private byte[] counter;
 
     public EncryptionVauKey(byte[] appData) {
         this.appData = appData;
-        counter = new byte[8];
-    }
-
-    public void countUp() {
-        ByteBuffer byteBuffer = ByteBuffer.wrap(counter);
-        int newCount = byteBuffer.getInt() + 1;
-        byteBuffer = ByteBuffer.allocate(8);
-        byteBuffer.putInt(newCount);
-        counter =  byteBuffer.array();
     }
 }

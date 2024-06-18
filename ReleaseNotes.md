@@ -2,6 +2,10 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.11
+### fixed
+- Deleted unnecessary (and erroneous) second request counter
+
 ## Release 1.0.10
 ### fixed
 - Corrected 8 byte request counter using type long (8 bytes) instead of type int (4 bytes)
