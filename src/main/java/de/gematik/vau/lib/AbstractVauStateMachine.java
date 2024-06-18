@@ -108,8 +108,7 @@ public abstract class AbstractVauStateMachine {
     byte[] a = new byte[4];
     new SecureRandom().nextBytes(a);
 
-    encryptionVauKey.countUp();
-    byte[] iv = unionByteArrays(a, encryptionVauKey.getCounter());
+    byte[] iv = unionByteArrays(a, reqCtrBytes);
 
     byte[] ciphertext = encryptWithAesGcm(encryptionVauKey.getAppData(), iv, cleartext, header);
 
