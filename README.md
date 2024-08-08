@@ -5,10 +5,13 @@ Dieses Repository dient als Beispielimplementierung in JAVA und implementiert de
 ## Einschränkungen & Hinweise
 
 - Es werden keine Zertifikate geprüft. 
-- Es beinhaltet außerdem nur ECC, kein RSA. 
-- Die kryptografischen Abhängigkeiten sind neben java.security auch 
-Bouncy Castle. 
+- Es beinhaltet außerdem nur ECC, kein RSA.
 - Der Transport der Daten der Public Keys geschieht über die binäre Codierung CBOR.
+- Die kryptografischen Abhängigkeiten sind neben java.security auch Bouncy Castle.
+
+> [!IMPORTANT]
+> Die Implementierung mit BouncyCastle beinhaltet auch ein Workaround, welcher [implementiert](src/main/java/de/gematik/vau/lib/crypto/KyberEncoding.java) werden musste, damit diese kompatibel mit der Spezifikation wie in [Kapitel 7.1] beschrieben ist. Dies betrifft die Erzeugung von Kyber Schlüssel nach dem Kyber Release v3.0.2. In BouncyCastle wurde bereits die Draft Implementierung FIPS 203 umgesetzt, welche inkompatibel mit diesem Kyber Release ist. Dieser Workaround ist auf der folgenden Seite beschrieben worden:
+> https://words.filippo.io/dispatches/mlkem768/#bonus-track-using-a-ml-kem-implementation-as-kyber-v3
 
 ## VAU Handshake
 In der Datei [VauHandshakeTest.java](src/test/java/de/gematik/vau/VauHandshakeTest.java) befindet sich eine Beispielimplementierung des gesamten Handshakes wie er in der Spezifikation im [Kapitel 7.1](https://gemspec.gematik.de/docs/gemSpec/gemSpec_Krypt/latest/#7.1) beschrieben ist:

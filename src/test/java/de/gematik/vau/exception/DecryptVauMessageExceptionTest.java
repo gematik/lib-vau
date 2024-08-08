@@ -114,7 +114,8 @@ class DecryptVauMessageExceptionTest {
 
         assertThatThrownBy(() -> server.decryptVauMessage(simplyNotAValidCiphertext))
           .isInstanceOf(IllegalArgumentException.class)
-          .hasMessageContaining("Key ID in the header is not correct");
+          .hasMessageContaining("Key ID in the header")
+            .hasMessageContaining("does not equals");
     }
 
     @Test
@@ -127,6 +128,7 @@ class DecryptVauMessageExceptionTest {
         System.arraycopy(clientKeyId, 0, onlyHeaderValid, 11, 32);
         assertThatThrownBy(() -> server.decryptVauMessage(onlyHeaderValid))
           .isInstanceOf(VauDecryptionException.class)
-          .hasMessageContaining("Exception thrown whilst trying to decrypt VAU message");
+          .hasMessageContaining("Exception thrown whilst trying to decrypt VAU message")
+            .hasMessageContaining( "Tag mismatch!");
     }
 }

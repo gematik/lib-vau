@@ -18,6 +18,9 @@ package de.gematik.vau;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.VauClientStateMachine;
@@ -52,7 +55,9 @@ import org.bouncycastle.pqc.jcajce.provider.kyber.BCKyberPublicKey;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.bouncycastle.util.io.pem.PemObject;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 @Slf4j
 class VauHandshakeTest {
@@ -66,6 +71,12 @@ class VauHandshakeTest {
   }
 
   private int msgNumber = 0;
+
+  @BeforeEach
+  public void setUp() {
+    final Logger logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    logger.setLevel(Level.TRACE);
+  }
 
   @SneakyThrows
   @Test

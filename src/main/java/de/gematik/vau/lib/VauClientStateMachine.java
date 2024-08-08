@@ -176,8 +176,11 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
   }
 
   @Override
-  protected boolean validateKeyId(byte[] keyId) {
-    return Arrays.equals(clientKey2.getKeyId(), keyId);
+  protected void checkRequestKeyId(byte[] keyId) {
+    if (!Arrays.equals(clientKey2.getKeyId(), keyId)) {
+      throw new IllegalArgumentException("Key ID in the header " + Hex.toHexString(keyId) +
+          " does not equals " + Hex.toHexString(clientKey2.getKeyId()) + " stored on client side");
+    }
   }
 
   private void verifyClientMessageIsWellFormed(VauEccPublicKey eccPublicKey, VauBasicPublicKey kyberPublicKey) {
