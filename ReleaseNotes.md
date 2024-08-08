@@ -2,6 +2,12 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.12
+### added
+- Extended trace logging for received encrypted VAU messages (user data)
+- Error message with more details in case of an exception during the VAU decryption process
+- Added imported hint for the VAU key derivation in Readme using a workaround for the BouncyCastle FIPS 203 draft implementation
+
 ## Release 1.0.11
 ### fixed
 - Deleted unnecessary (and erroneous) second request counter

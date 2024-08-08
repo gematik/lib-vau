@@ -30,7 +30,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
 
 import javax.crypto.Cipher;
@@ -53,13 +52,11 @@ public abstract class AbstractVauStateMachine {
     .build();
   private static final ObjectMapper objectMapper = new ObjectMapper()
     .enable(SerializationFeature.INDENT_OUTPUT);
-  private static final int MINIMUM_CIPHERTEXT_LENGTH = 1 + 1 + 1 + 8 + 32 + 12 + 1 + 16; //A_24628
   private static final String MESSAGE_TYPE = "MessageType";
   private static final int AUTHENTICATION_TAG_BIT_SIZE = 128; //A_24628
   private byte[] keyId;
   private EncryptionVauKey encryptionVauKey;
   private byte[] decryptionVauKey;
-  private boolean isPu = false;
 
   @SneakyThrows
   byte[] encodeUsingCbor(Object value) {
@@ -146,14 +143,6 @@ public abstract class AbstractVauStateMachine {
       throw new IllegalArgumentException("Length of IV must be 12 Bytes.");
     }
 
-    if (log.isTraceEnabled()) {
-      log.trace(
-        "trying to decrypt {}\n with \nkey {} with \niv {} with \nad {}",
-        Hex.toHexString(cipherText),
-        Hex.toHexString(secretKey),
-        Hex.toHexString(iv),
-        Hex.toHexString(header));
-    }
     Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding"); // NOSONAR
     cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(secretKey, "AES"),
       new GCMParameterSpec(AUTHENTICATION_TAG_BIT_SIZE, iv));
@@ -169,37 +158,27 @@ public abstract class AbstractVauStateMachine {
    * @return the resulting plaintext
    */
   public byte[] decryptVauMessage(byte[] ciphertext) {
-    if (ciphertext.length < MINIMUM_CIPHERTEXT_LENGTH) {
-      throw new IllegalArgumentException(
-        "Invalid ciphertext length. Needs to be at least " + MINIMUM_CIPHERTEXT_LENGTH + " bytes.");
+    var message = new EncryptedVauMessage(ciphertext);
+
+    // trace all
+    if (log.isTraceEnabled()) {
+      message.logAsTrace(decryptionVauKey);
     }
 
-    byte[] header = ArrayUtils.subarray(ciphertext, 0, 43);
-    byte versionByte = header[0];
-    if (versionByte != 2) {
-      throw new IllegalArgumentException("Invalid version byte. Expected 2, got " + versionByte);
-    }
-    byte puByte = header[1];
-    if (puByte != (byte) (isPu ? 1 : 0)) {
-      throw new IllegalArgumentException("Invalid PU byte. Expected " + (isPu ? 1 : 0) + ", got " + puByte);
-    }
-    byte reqByte = header[2];
-    checkRequestByte(reqByte);
-    long reqCtr = ByteBuffer.wrap(ArrayUtils.subarray(header, 3, 3 + 8))
-      .getLong();
-    checkRequestCounter(reqCtr);
+    // check VAU header information
+    message.checkCommonMessageParameters();
+    checkRequestByte(message.getRequest());
+    checkRequestCounter(ByteBuffer.wrap(message.getRequestCounter()).getLong());
+    checkRequestKeyId(message.getKeyId());
 
-    byte[] headerKeyId = ArrayUtils.subarray(header, 11, header.length);
-    if (!validateKeyId(headerKeyId)) {
-      throw new IllegalArgumentException("Key ID in the header is not correct");
-    }
-
-    byte[] iv = ArrayUtils.subarray(ciphertext, 43, 43 + 12);
-    byte[] ct = ArrayUtils.subarray(ciphertext, 55, ciphertext.length);
     try {
-      return decryptWithAesGcm(decryptionVauKey, iv, ct, header);
+      var cleartext = decryptWithAesGcm(decryptionVauKey, message.getIv(), message.getCt(), message.getHeader());
+      if (log.isTraceEnabled()) {
+        log.trace("Successful decrypted ct as: \n {}", new String(cleartext));
+      }
+      return cleartext;
     } catch (GeneralSecurityException e) {
-      throw new VauDecryptionException("Exception thrown whilst trying to decrypt VAU message.", e);
+      throw new VauDecryptionException("Exception thrown whilst trying to decrypt VAU message: " + e.getMessage(), e);
     }
   }
 
@@ -207,7 +186,7 @@ public abstract class AbstractVauStateMachine {
 
   protected abstract void checkRequestByte(byte reqByte);
 
-  protected abstract boolean validateKeyId(byte[] keyId);
+  protected abstract void checkRequestKeyId(byte[] keyId);
 
   protected static void checkCertificateExpired(int exp) throws CertificateException {
     Instant now = new Date().toInstant();

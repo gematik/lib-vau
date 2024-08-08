@@ -187,7 +187,7 @@ public class KEM {
       byte[] ciphertext = cipher.doFinal(plaintext);
       return ArrayUtils.addAll(iv, ciphertext);
     } catch (GeneralSecurityException e) {
-      throw new IllegalArgumentException("Error while encrypting plaintext", e);
+      throw new IllegalArgumentException("Error while encrypting plaintext: " + e.getMessage(), e);
     }
   }
 
@@ -212,7 +212,7 @@ public class KEM {
       cipher.init(Cipher.DECRYPT_MODE, secretKey, ivParameterSpec);
       return cipher.doFinal(ct);
     } catch (GeneralSecurityException e) {
-      throw new IllegalArgumentException("Error while decrypting AEAD ciphertext", e);
+      throw new IllegalArgumentException("Error while decrypting AEAD ciphertext: " + e.getMessage(), e);
     }
   }
 
