@@ -129,6 +129,6 @@ class DecryptVauMessageExceptionTest {
         assertThatThrownBy(() -> server.decryptVauMessage(onlyHeaderValid))
           .isInstanceOf(VauDecryptionException.class)
           .hasMessageContaining("Exception thrown whilst trying to decrypt VAU message")
-            .hasMessageContaining( "Tag mismatch!");
+            .hasMessageContaining( "Tag mismatch");
     }
 }
