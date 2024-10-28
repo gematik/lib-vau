@@ -40,10 +40,11 @@ public class EncryptedVauMessage {
   private final byte[] iv;
   private final byte[] ct;
 
-  private static final boolean IS_PU = false;
+  private final boolean isPu;
   private static final int MINIMUM_CIPHERTEXT_LENGTH = 1 + 1 + 1 + 8 + 32 + 12 + 1 + 16; //A_24628
 
-  public EncryptedVauMessage(byte[] message) {
+  public EncryptedVauMessage(byte[] message, boolean isPu) {
+    this.isPu = isPu;
     if (message.length < MINIMUM_CIPHERTEXT_LENGTH) {
       throw new IllegalArgumentException(
           "Invalid ciphertext length. Needs to be at least " + MINIMUM_CIPHERTEXT_LENGTH +
@@ -63,10 +64,13 @@ public class EncryptedVauMessage {
 
   public void checkCommonMessageParameters() {
     if (version != 0x02) {
-      throw new IllegalArgumentException("Invalid version byte. Expected 2, got " + version);
+      throw new IllegalArgumentException(
+          "Invalid version byte. Expected 2, got %s".formatted(version));
     }
-    if (pu != (byte) (IS_PU ? 0x01 : 0x00)) {
-      throw new IllegalArgumentException("Invalid PU byte. Expected " + (IS_PU ? 0x01 : 0x00) + ", but got " + pu);
+    int expectedPu = isPu ? 0x01 : 0x00;
+    if (pu != (byte) (expectedPu)) {
+      throw new IllegalArgumentException(
+          "Invalid PU byte. Expected %s, but got %s".formatted(expectedPu, pu));
     }
   }
 

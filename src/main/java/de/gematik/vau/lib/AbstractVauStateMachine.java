@@ -57,6 +57,11 @@ public abstract class AbstractVauStateMachine {
   private byte[] keyId;
   private EncryptionVauKey encryptionVauKey;
   private byte[] decryptionVauKey;
+  private final boolean isPu;
+
+  AbstractVauStateMachine(boolean isPu) {
+    this.isPu = isPu;
+  }
 
   @SneakyThrows
   byte[] encodeUsingCbor(Object value) {
@@ -158,7 +163,7 @@ public abstract class AbstractVauStateMachine {
    * @return the resulting plaintext
    */
   public byte[] decryptVauMessage(byte[] ciphertext) {
-    var message = new EncryptedVauMessage(ciphertext);
+    var message = new EncryptedVauMessage(ciphertext, isPu);
 
     // trace all
     if (log.isTraceEnabled()) {

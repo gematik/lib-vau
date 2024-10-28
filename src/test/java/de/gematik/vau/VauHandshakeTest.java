@@ -123,7 +123,7 @@ class VauHandshakeTest {
     assertThat(message2Tree.get("MessageType").textValue()).isEqualTo("M2");
     assertThat(message2Tree.get("Kyber768_ct").binaryValue()).hasSize(1088);
     log.debug("AEAD_ct length: {}", message2Tree.get("AEAD_ct").binaryValue().length);
-    assertThat(message2Tree.get("AEAD_ct").binaryValue()).hasSizeBetween(1550, 1557);
+    assertThat(message2Tree.get("AEAD_ct").binaryValue()).hasSizeBetween(1549, 1557);
     log.debug("x: {}", Hex.toHexString(message1Tree.get("ECDH_PK").get("x").binaryValue()));
     log.debug("y: {}", Hex.toHexString(message1Tree.get("ECDH_PK").get("y").binaryValue()));
 

@@ -21,53 +21,65 @@ import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import java.security.PrivateKey;
 import java.security.Signature;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 
 @Value
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @Builder
+@Slf4j
 public class SignedPublicVauKeys {
 
   private static final CBORMapper CBOR_MAPPER = new CBORMapper();
 
   @JsonProperty("signed_pub_keys")
   byte[] signedPubKeys;
+
   @JsonProperty("signature-ES256")
   byte[] signatureEs256;
+
   @JsonProperty("cert_hash")
   byte[] certHash;
+
   @JsonProperty("cdv")
   int cdv;
+
   @JsonProperty("ocsp_response")
   byte[] ocspResponse;
 
   /**
    * Builds the SignedPublicVauKeys using the input
+   *
    * @param serverAutCertificate decrypted server certificate in bytes
    * @param privateKey corresponding private key
-   * @param ocspResponseAutCertificate decrypted OCSP response authorization certificate of client in bytes
+   * @param ocspResponseAutCertificate decrypted OCSP response authorization certificate of client
+   *     in bytes
    * @param cdv Cert-Data-Version (natural number, starting at 1)
    * @param vauServerKeys public keys of server
    * @return the SignedPublicVauKeys
    */
   @SneakyThrows
-  public static SignedPublicVauKeys sign(byte[] serverAutCertificate, PrivateKey privateKey,
-    byte[] ocspResponseAutCertificate, int cdv, VauPublicKeys vauServerKeys) {
+  public static SignedPublicVauKeys sign(
+      byte[] serverAutCertificate,
+      PrivateKey privateKey,
+      byte[] ocspResponseAutCertificate,
+      int cdv,
+      VauPublicKeys vauServerKeys) {
 
     final byte[] keyBytes = CBOR_MAPPER.writeValueAsBytes(vauServerKeys);
     return SignedPublicVauKeys.builder()
-      .signedPubKeys(keyBytes)
-      .certHash(DigestUtils.sha256(serverAutCertificate))
-      .cdv(cdv)
-      .ocspResponse(ocspResponseAutCertificate)
-      .signatureEs256(generateEccSignature(keyBytes, privateKey))
-      .build();
+        .signedPubKeys(keyBytes)
+        .certHash(DigestUtils.sha256(serverAutCertificate))
+        .cdv(cdv)
+        .ocspResponse(ocspResponseAutCertificate)
+        .signatureEs256(generateEccSignature(keyBytes, privateKey))
+        .build();
   }
 
   private static byte[] generateEccSignature(byte[] tbsData, PrivateKey privateKey) {
     try {
-      Signature ecdsaSignature = Signature.getInstance("SHA256withECDSA");
+      Signature ecdsaSignature = Signature.getInstance("SHA256withPLAIN-ECDSA", "BC");
       ecdsaSignature.initSign(privateKey);
       ecdsaSignature.update(tbsData);
       return ecdsaSignature.sign();
