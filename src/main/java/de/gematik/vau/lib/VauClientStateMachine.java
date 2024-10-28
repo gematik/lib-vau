@@ -46,6 +46,14 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
   private byte[] transcriptClient = new byte[0];
   private long requestCounter = 0;
 
+  public VauClientStateMachine(boolean isPu) {
+    super(isPu);
+  }
+
+  public VauClientStateMachine() {
+    super(false);
+  }
+
   /**
    * Handshake Message 1: Generates Key Pairs, stores them in a Message1 and encodes it
    * @return the encoded message 1

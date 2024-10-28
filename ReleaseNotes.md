@@ -2,6 +2,13 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+## Release 1.0.13
+### fixed
+- corrected encoding of "signature-ES256" to no longer be DER-encoded
+
+### added
+- made PU VAU-header configurable for client/server statemachine instances
+
 ## Release 1.0.12
 ### added
 - Extended trace logging for received encrypted VAU messages (user data)

@@ -51,17 +51,24 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
   private long clientRequestCounter;
   private static final int EXPIRATION_DAYS = 30;
 
-  public VauServerStateMachine(SignedPublicVauKeys signedPublicVauKeys, EccKyberKeyPair serverVauKeys) {
-    super();
+  public VauServerStateMachine(
+          SignedPublicVauKeys vauKeys, EccKyberKeyPair kyberKeys, boolean isPu) {
+    super(isPu);
 
-    int iat = signedPublicVauKeys.extractVauKeys().getIat();
-    int exp = signedPublicVauKeys.extractVauKeys().getExp();
-    if(exp - iat > EXPIRATION_DAYS * 60 * 60 * 24) {
-      throw new IllegalArgumentException("Dates of initialization and expiration of server keys can be only up to 30 days apart.");
+    int iat = vauKeys.extractVauKeys().getIat();
+    int exp = vauKeys.extractVauKeys().getExp();
+    if (exp - iat > EXPIRATION_DAYS * 60 * 60 * 24) {
+      throw new IllegalArgumentException(
+              "Dates of initialization and expiration of server keys can be only up to 30 days apart.");
     }
 
-    this.signedPublicVauKeys = signedPublicVauKeys;
-    this.serverVauKeys = serverVauKeys;
+    this.signedPublicVauKeys = vauKeys;
+    this.serverVauKeys = kyberKeys;
+  }
+
+  public VauServerStateMachine(
+          SignedPublicVauKeys signedPublicVauKeys, EccKyberKeyPair serverVauKeys) {
+    this(signedPublicVauKeys, serverVauKeys, false);
   }
 
   /**
