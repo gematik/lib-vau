@@ -51,8 +51,8 @@ public class VauServerStateMachine extends AbstractVauStateMachine {
   private long clientRequestCounter;
   private static final int EXPIRATION_DAYS = 30;
 
-  public VauServerStateMachine(SignedPublicVauKeys signedPublicVauKeys, EccKyberKeyPair serverVauKeys) {
-    super();
+  public VauServerStateMachine(SignedPublicVauKeys signedPublicVauKeys, EccKyberKeyPair serverVauKeys, byte puByte) {
+    super(puByte);
 
     int iat = signedPublicVauKeys.extractVauKeys().getIat();
     int exp = signedPublicVauKeys.extractVauKeys().getExp();

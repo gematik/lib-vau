@@ -62,7 +62,7 @@ class DecryptVauMessageExceptionTest {
                 Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
                 1, serverVauKeys);
 
-        server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+        server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0);
         client = new VauClientStateMachine();
         final byte[] message1Encoded = client.generateMessage1();
         final byte[] message2Encoded = server.receiveMessage(message1Encoded);

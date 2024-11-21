@@ -154,7 +154,7 @@ class ExceptionTest {
                 Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
                 1, serverVauKeys);
 
-        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0);
         VauClientStateMachine client = new VauClientStateMachine();
         final byte[] message1Encoded = client.generateMessage1();
         final byte[] message2Encoded = server.receiveMessage(message1Encoded);
@@ -189,7 +189,7 @@ class ExceptionTest {
                 Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
                 1, serverVauKeys);
 
-        assertThatThrownBy(() -> new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair)).isInstanceOf(IllegalArgumentException.class).hasMessage("Dates of initialization and expiration of server keys can be only up to 30 days apart.");
+        assertThatThrownBy(() -> new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0)).isInstanceOf(IllegalArgumentException.class).hasMessage("Dates of initialization and expiration of server keys can be only up to 30 days apart.");
     }
 
     @SneakyThrows
@@ -209,7 +209,7 @@ class ExceptionTest {
                 Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
                 1, serverVauKeys);
 
-        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0);
         VauClientStateMachine client = new VauClientStateMachine();
         final byte[] message1Encoded = client.generateMessage1();
         final byte[] message2Encoded = server.receiveMessage(message1Encoded);
@@ -347,7 +347,7 @@ class ExceptionTest {
                 Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
                 1, serverVauKeys);
 
-        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+        VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0);
         VauClientStateMachine client = new VauClientStateMachine();
         final byte[] message1Encoded = client.generateMessage1();
 

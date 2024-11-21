@@ -21,11 +21,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
-import de.gematik.vau.lib.data.*;
+import de.gematik.vau.lib.data.EncryptedVauMessage;
+import de.gematik.vau.lib.data.EncryptionVauKey;
+import de.gematik.vau.lib.data.VauEccPublicKey;
+import de.gematik.vau.lib.data.VauMessage1;
+import de.gematik.vau.lib.data.VauMessage2;
+import de.gematik.vau.lib.data.VauMessage3;
+import de.gematik.vau.lib.data.VauMessage4;
 import de.gematik.vau.lib.exceptions.VauDecryptionException;
 import de.gematik.vau.lib.exceptions.VauEncryptionException;
-import java.security.GeneralSecurityException;
-import java.time.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -36,8 +40,12 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
+import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Date;
 
 import static de.gematik.vau.lib.util.ArrayUtils.unionByteArrays;
@@ -57,6 +65,12 @@ public abstract class AbstractVauStateMachine {
   private byte[] keyId;
   private EncryptionVauKey encryptionVauKey;
   private byte[] decryptionVauKey;
+
+  private final byte puByte;
+
+  public AbstractVauStateMachine(byte puByte) {
+    this.puByte = puByte;
+  }
 
   @SneakyThrows
   byte[] encodeUsingCbor(Object value) {
@@ -97,7 +111,6 @@ public abstract class AbstractVauStateMachine {
    */
   public byte[] encryptVauMessage(byte[] cleartext) {
     byte versionByte = 2;
-    byte puByte = 0;
     byte reqByte = getRequestByte();
     byte[] reqCtrBytes = ByteBuffer.allocate(8).putLong(getRequestCounter()).array();
     byte[] header = unionByteArrays(versionByte, puByte, reqByte, reqCtrBytes, getKeyId());

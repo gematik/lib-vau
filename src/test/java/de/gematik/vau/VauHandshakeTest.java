@@ -110,7 +110,7 @@ class VauHandshakeTest {
       ((BCKyberPrivateKey) serverVauKeyPair.getKyberKeyPair().getPrivate()).getParameterSpec().getName()).isEqualTo(
       "KYBER768");
 
-    VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+    VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0);
     VauClientStateMachine client = new VauClientStateMachine();
 
     final byte[] message1Encoded = client.generateMessage1();

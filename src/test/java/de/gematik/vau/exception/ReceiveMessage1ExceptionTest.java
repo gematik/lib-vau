@@ -58,7 +58,7 @@ class ReceiveMessage1ExceptionTest {
                 Files.readAllBytes(Path.of("src/test/resources/ocsp-response-vau-sig.der")),
                 1, serverVauKeys);
 
-        server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
+        server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair, (byte) 0);
         client = new VauClientStateMachine();
     }
 
