@@ -101,14 +101,8 @@ class VauHandshakeTest {
     assertThat(assertPublicKeyAlgorithm(serverVauKeyPair.getEccKeyPair().getPublic())).isTrue();
     assertThat(assertPrivateKeyAlgorithm(serverVauKeyPair.getEccKeyPair().getPrivate())).isTrue();
 
-    assertThat(serverVauKeyPair.getKyberKeyPair().getPublic().getAlgorithm()).isEqualTo("KYBER768");
-    assertThat(serverVauKeyPair.getKyberKeyPair().getPrivate().getAlgorithm()).isEqualTo("KYBER768");
-    assertThat(
-      ((BCKyberPublicKey) serverVauKeyPair.getKyberKeyPair().getPublic()).getParameterSpec().getName()).isEqualTo(
-      "KYBER768");
-    assertThat(
-      ((BCKyberPrivateKey) serverVauKeyPair.getKyberKeyPair().getPrivate()).getParameterSpec().getName()).isEqualTo(
-      "KYBER768");
+    assertThat(serverVauKeyPair.getKyberKeyPair().getPublic().getAlgorithm()).isEqualTo("ML-KEM-768");
+    assertThat(serverVauKeyPair.getKyberKeyPair().getPrivate().getAlgorithm()).isEqualTo("ML-KEM-768");
 
     VauServerStateMachine server = new VauServerStateMachine(signedPublicVauKeys, serverVauKeyPair);
     VauClientStateMachine client = new VauClientStateMachine();
