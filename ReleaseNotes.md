@@ -2,6 +2,10 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+# Release 1.0.14
+### update
+- Updated to BouncyCastle 1.80
+
 ## Release 1.0.13
 ### fixed
 - corrected encoding of "signature-ES256" to no longer be DER-encoded
