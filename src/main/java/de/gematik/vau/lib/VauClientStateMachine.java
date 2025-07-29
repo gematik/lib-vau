@@ -1,18 +1,27 @@
-/*
- * Copyright 2024 gematik GmbH
- *
+/*-
+ * #%L
+ * lib-vau
+ * %%
+ * Copyright (C) 2025 gematik GmbH
+ * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ * 
+ * *******
+ * 
+ * For additional notes and disclaimer from gematik and in case of changes by gematik find details in the "Readme" file.
+ * #L%
  */
+
 
 package de.gematik.vau.lib;
 
@@ -20,18 +29,17 @@ package de.gematik.vau.lib;
 import de.gematik.vau.lib.crypto.KEM;
 import de.gematik.vau.lib.data.*;
 import de.gematik.vau.lib.exceptions.VauEncryptionException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Arrays;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
-
-import java.security.InvalidKeyException;
-import java.util.Arrays;
 
 /**
  * State machine for the VaU client. An instance of this class is created for each connection.
@@ -82,9 +90,11 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
    */
   @SneakyThrows
   public byte[] receiveMessage2(byte[] message2Encoded) {
+    log.debug("message2 bytes: {}", Hex.toHexString(message2Encoded));
     VauMessage2 vauMessage2;
     try {
       vauMessage2 = decodeCborMessageToClass(message2Encoded, VauMessage2.class);
+      logDebugObject("vauMessage2: {}", vauMessage2);
     }
     catch (Exception e) {
       throw new IllegalArgumentException("Could not CBOR decode Message 2 when receiving it at client. " + e.getMessage());
@@ -93,15 +103,18 @@ public class VauClientStateMachine extends AbstractVauStateMachine {
     KdfMessage clientKemResult1 = KEM.decapsulateMessages(vauMessage2, clientKey1);
     kdfClientKey1 = KEM.kdf(clientKemResult1);
     byte[] transferredSignedServerPublicKey = KEM.decryptAead(kdfClientKey1.getServerToClient(), vauMessage2.getAeadCt());
+    log.debug("signedPublicVauKeys bytes: {}", Hex.toHexString(transferredSignedServerPublicKey));
 
     SignedPublicVauKeys signedPublicVauKeys;
     try{
       signedPublicVauKeys = decodeCborMessageToClass(transferredSignedServerPublicKey, SignedPublicVauKeys.class);
+      logDebugObject("signedPublicVauKeys", signedPublicVauKeys);
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not CBOR decode Signed Server Public Keys when receiving it at client.", e);
     }
 
     VauPublicKeys transferredSignedServerPublicKeyList = signedPublicVauKeys.extractVauKeys();
+    logDebugObject("transferredSignedServerPublicKeyList", transferredSignedServerPublicKeyList);
     checkCertificateExpired(transferredSignedServerPublicKeyList.getExp());
 
     verifyClientMessageIsWellFormed(transferredSignedServerPublicKeyList.getEcdhPublicKey(), transferredSignedServerPublicKeyList);
