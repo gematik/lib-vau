@@ -1,6 +1,8 @@
-<img align="right" width="200" height="37" src="Gematik_Logo_Flag_With_Background.png" alt="Gematik Logo"/> <br/>
-
 # Release notes lib-vau for ePA 3.x and above
+
+# Release 1.0.15
+### update
+- updated to Apache commons-lang3 3.18.0
 
 # Release 1.0.14
 ### update
@@ -17,7 +19,7 @@
 ### added
 - Extended trace logging for received encrypted VAU messages (user data)
 - Error message with more details in case of an exception during the VAU decryption process
-- Added imported hint for the VAU key derivation in Readme using a workaround for the BouncyCastle FIPS 203 draft implementation
+- Added an imported hint for the VAU key derivation in Readme using a workaround for the BouncyCastle FIPS 203 draft implementation
 
 ## Release 1.0.11
 ### fixed
@@ -25,11 +27,11 @@
 
 ## Release 1.0.10
 ### fixed
-- Corrected 8 byte request counter using type long (8 bytes) instead of type int (4 bytes)
+- Corrected eight byte request counter using type long (eight bytes) instead of type int (four bytes)
 
 ## Release 1.0.9
 ### fixed
-- Corrected the order of S2C and C2S keys in the KeyDerivation in the first key derivation.
+- Correct the order of S2C and C2S keys in the KeyDerivation in the first key derivation.
 
 ## Release 1.0.8
 ### fixed
@@ -77,13 +79,13 @@
 ## Release 1.0.1
 
 ### added
-- Additional checks & error handling
+- Additional checks and error handling
 
 ## Release 1.0.0
 - Initial version (internal only)
 - Available functions:
   - VAU handshake for client & server
-  - encryption & decryption of data streams
+  - encryption and decryption of data streams
   - statemachine for VAU client
   - statemachine for VAU server
 x
