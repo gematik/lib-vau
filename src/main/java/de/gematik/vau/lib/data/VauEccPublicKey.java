@@ -27,11 +27,11 @@ package de.gematik.vau.lib.data;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.gematik.vau.lib.crypto.EllipticCurve;
 import java.math.BigInteger;
 import lombok.Value;
 import org.bouncycastle.jce.interfaces.ECPublicKey;
+import tools.jackson.databind.annotation.JsonDeserialize;
 
 @Value
 public class VauEccPublicKey {

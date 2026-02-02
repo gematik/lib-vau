@@ -25,11 +25,6 @@
 
 package de.gematik.vau.lib;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.data.*;
 import de.gematik.vau.lib.exceptions.VauDecryptionException;
 import de.gematik.vau.lib.exceptions.VauEncryptionException;
@@ -40,6 +35,12 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.SerializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -59,8 +60,8 @@ public abstract class AbstractVauStateMachine {
   private static final CBORMapper cborMapper = CBORMapper.builder()
     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     .build();
-  private static final ObjectMapper objectMapper = new ObjectMapper()
-    .enable(SerializationFeature.INDENT_OUTPUT);
+  private static final ObjectMapper objectMapper = JsonMapper.builder()
+          .enable(SerializationFeature.INDENT_OUTPUT).build();
   private static final String MESSAGE_TYPE = "MessageType";
   private static final int AUTHENTICATION_TAG_BIT_SIZE = 128; //A_24628
   private byte[] keyId;

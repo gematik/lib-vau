@@ -26,12 +26,12 @@
 package de.gematik.vau.lib.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import java.security.PrivateKey;
 import java.security.Signature;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 @Value
 @NoArgsConstructor(force = true, access = AccessLevel.PRIVATE)

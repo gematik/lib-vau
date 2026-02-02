@@ -26,8 +26,6 @@
 package de.gematik.vau.lib.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
 import de.gematik.vau.lib.crypto.EllipticCurve;
 import de.gematik.vau.lib.crypto.KyberEncoding;
 import de.gematik.vau.lib.util.ArrayUtils;
@@ -45,6 +43,8 @@ import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.bouncycastle.util.encoders.Hex;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 @Data
 public class EccKyberKeyPair {
