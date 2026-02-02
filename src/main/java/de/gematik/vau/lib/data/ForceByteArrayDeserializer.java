@@ -25,19 +25,21 @@
 
 package de.gematik.vau.lib.data;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
 
 import java.io.IOException;
 
-public class ForceByteArrayDeserializer extends JsonDeserializer<byte[]> {
+public class ForceByteArrayDeserializer extends ValueDeserializer<byte[]> {
 
-  @Override
-  public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-    if (p.getText() != null) {
-      throw new IOException("Expected byte array but found " + p.getCurrentToken());
+    @Override
+    public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws JacksonException {
+        if (p.getString() != null) {
+            throw JacksonIOException.construct(new IOException("Expected byte array but found " + p.currentToken()));
+        }
+        return p.getBinaryValue();
     }
-    return p.getBinaryValue();
-  }
 }

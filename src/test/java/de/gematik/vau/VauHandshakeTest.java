@@ -30,8 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.dataformat.cbor.databind.CBORMapper;
+import tools.jackson.databind.JsonNode;
 import de.gematik.vau.lib.VauClientStateMachine;
 import de.gematik.vau.lib.VauServerStateMachine;
 import de.gematik.vau.lib.data.EccKyberKeyPair;
@@ -67,6 +66,7 @@ import org.bouncycastle.util.io.pem.PemObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import tools.jackson.dataformat.cbor.CBORMapper;
 
 @Slf4j
 class VauHandshakeTest {
