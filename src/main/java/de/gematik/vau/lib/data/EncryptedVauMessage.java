@@ -2,26 +2,26 @@
  * #%L
  * lib-vau
  * %%
- * Copyright (C) 2025 gematik GmbH
+ * Copyright (C) 2025 - 2026 gematik GmbH
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * *******
- * 
- * For additional notes and disclaimer from gematik and in case of changes by gematik find details in the "Readme" file.
+ *
+ * For additional notes and disclaimer from gematik and in case of changes
+ * by gematik, find details in the "Readme" file.
  * #L%
  */
-
 
 package de.gematik.vau.lib.data;
 
@@ -40,9 +40,9 @@ public class EncryptedVauMessage {
   private final byte[] message;
 
   private final byte[] header;
-  private final byte   version;
-  private final byte   pu;
-  private final byte   request;
+  private final byte version;
+  private final byte pu;
+  private final byte request;
   private final byte[] requestCounter;
   private final byte[] keyId;
 
@@ -50,14 +50,17 @@ public class EncryptedVauMessage {
   private final byte[] ct;
 
   private final boolean isPu;
-  private static final int MINIMUM_CIPHERTEXT_LENGTH = 1 + 1 + 1 + 8 + 32 + 12 + 1 + 16; //A_24628
+  private static final int MINIMUM_CIPHERTEXT_LENGTH = 1 + 1 + 1 + 8 + 32 + 12 + 1 + 16; // A_24628
 
   public EncryptedVauMessage(byte[] message, boolean isPu) {
     this.isPu = isPu;
     if (message.length < MINIMUM_CIPHERTEXT_LENGTH) {
       throw new IllegalArgumentException(
-          "Invalid ciphertext length. Needs to be at least " + MINIMUM_CIPHERTEXT_LENGTH +
-              " bytes, but we received " + message.length + " bytes!");
+          "Invalid ciphertext length. Needs to be at least "
+              + MINIMUM_CIPHERTEXT_LENGTH
+              + " bytes, but we received "
+              + message.length
+              + " bytes!");
     }
 
     this.message = message;
@@ -104,13 +107,11 @@ public class EncryptedVauMessage {
         message.length,
         Hex.toHexString(header),
         Hex.toHexString(serverSecretKey),
-
         Hex.toHexString(unionByteArrays(version)),
         Hex.toHexString(unionByteArrays(pu)),
         Hex.toHexString(unionByteArrays(request)),
         Hex.toHexString(requestCounter),
         Hex.toHexString(keyId),
-
         Hex.toHexString(iv),
         Hex.toHexString(ct));
   }

@@ -2,26 +2,26 @@
  * #%L
  * lib-vau
  * %%
- * Copyright (C) 2025 gematik GmbH
+ * Copyright (C) 2025 - 2026 gematik GmbH
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * *******
- * 
- * For additional notes and disclaimer from gematik and in case of changes by gematik find details in the "Readme" file.
+ *
+ * For additional notes and disclaimer from gematik and in case of changes
+ * by gematik, find details in the "Readme" file.
  * #L%
  */
-
 
 package de.gematik.vau.lib.data;
 
@@ -37,8 +37,10 @@ import org.bouncycastle.jce.interfaces.ECPublicKey;
 public class VauEccPublicKey {
 
   String crv;
+
   @JsonDeserialize(using = ForceByteArrayDeserializer.class)
   byte[] x;
+
   @JsonDeserialize(using = ForceByteArrayDeserializer.class)
   byte[] y;
 
@@ -49,14 +51,15 @@ public class VauEccPublicKey {
   }
 
   @JsonCreator
-  public VauEccPublicKey(@JsonProperty("crv") String crv, @JsonProperty("x") byte[] x, @JsonProperty("y") byte[] y) {
+  public VauEccPublicKey(
+      @JsonProperty("crv") String crv, @JsonProperty("x") byte[] x, @JsonProperty("y") byte[] y) {
     this.crv = crv;
     this.x = x;
     this.y = y;
   }
 
   public ECPublicKey toEcPublicKey() {
-    return EllipticCurve.getPublicKeyFromCoordinates(new BigInteger(1, x, 0, x.length),
-      new BigInteger(1, y, 0, y.length));
+    return EllipticCurve.getPublicKeyFromCoordinates(
+        new BigInteger(1, x, 0, x.length), new BigInteger(1, y, 0, y.length));
   }
 }
