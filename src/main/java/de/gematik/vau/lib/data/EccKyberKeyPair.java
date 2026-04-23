@@ -2,26 +2,26 @@
  * #%L
  * lib-vau
  * %%
- * Copyright (C) 2025 gematik GmbH
+ * Copyright (C) 2025 - 2026 gematik GmbH
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * *******
- * 
- * For additional notes and disclaimer from gematik and in case of changes by gematik find details in the "Readme" file.
+ *
+ * For additional notes and disclaimer from gematik and in case of changes
+ * by gematik, find details in the "Readme" file.
  * #L%
  */
-
 
 package de.gematik.vau.lib.data;
 
@@ -51,16 +51,14 @@ public class EccKyberKeyPair {
 
   private static final BouncyCastleProvider BOUNCY_CASTLE_PROVIDER = new BouncyCastleProvider();
 
-  protected static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER = Hex.decode(
-       "308204B2300B0609608648016503040402038204A100");
-  
-  protected static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER = Hex.decode(
-      "30820978020100300B06096086480165030404020482096404820960");
+  protected static final byte[] KYBER_PUBLIC_KEY_ENCODING_HEADER =
+      Hex.decode("308204B2300B0609608648016503040402038204A100");
 
-  @JsonIgnore
-  private final KeyPair eccKeyPair;
-  @JsonIgnore
-  private final KeyPair kyberKeyPair;
+  protected static final byte[] KYBER_PRIVATE_KEY_ENCODING_HEADER =
+      Hex.decode("30820978020100300B06096086480165030404020482096404820960");
+
+  @JsonIgnore private final KeyPair eccKeyPair;
+  @JsonIgnore private final KeyPair kyberKeyPair;
 
   /**
    * Generates a random ECDH key pair and a random Kyber-768 key pair
@@ -89,21 +87,22 @@ public class EccKyberKeyPair {
   }
 
   @SneakyThrows
-  private static KeyPair readKyberKeypairFromPkcs8Pem(byte[] kyberPrivateKeyData, byte[] kyberPublicKeyData) {
+  private static KeyPair readKyberKeypairFromPkcs8Pem(
+      byte[] kyberPrivateKeyData, byte[] kyberPublicKeyData) {
     final String keyType = "KYBER";
     KeyFactory keyFactory = KeyFactory.getInstance(keyType, new BouncyCastlePQCProvider());
 
-    X509EncodedKeySpec kyberPubKey = new X509EncodedKeySpec(
-      ArrayUtils.unionByteArrays(KYBER_PUBLIC_KEY_ENCODING_HEADER, kyberPublicKeyData),
-      keyType);
-    PKCS8EncodedKeySpec kyberPrivKey = new PKCS8EncodedKeySpec(
-      ArrayUtils.unionByteArrays(KYBER_PRIVATE_KEY_ENCODING_HEADER, kyberPrivateKeyData),
-      keyType);
+    X509EncodedKeySpec kyberPubKey =
+        new X509EncodedKeySpec(
+            ArrayUtils.unionByteArrays(KYBER_PUBLIC_KEY_ENCODING_HEADER, kyberPublicKeyData),
+            keyType);
+    PKCS8EncodedKeySpec kyberPrivKey =
+        new PKCS8EncodedKeySpec(
+            ArrayUtils.unionByteArrays(KYBER_PRIVATE_KEY_ENCODING_HEADER, kyberPrivateKeyData),
+            keyType);
 
     return new KeyPair(
-      keyFactory.generatePublic(kyberPubKey),
-      keyFactory.generatePrivate(kyberPrivKey)
-    );
+        keyFactory.generatePublic(kyberPubKey), keyFactory.generatePrivate(kyberPrivKey));
   }
 
   @SneakyThrows

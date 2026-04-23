@@ -2,26 +2,26 @@
  * #%L
  * lib-vau
  * %%
- * Copyright (C) 2025 gematik GmbH
+ * Copyright (C) 2025 - 2026 gematik GmbH
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * *******
- * 
- * For additional notes and disclaimer from gematik and in case of changes by gematik find details in the "Readme" file.
+ *
+ * For additional notes and disclaimer from gematik and in case of changes
+ * by gematik, find details in the "Readme" file.
  * #L%
  */
-
 
 package de.gematik.vau.lib.crypto;
 
@@ -46,11 +46,13 @@ import org.bouncycastle.util.BigIntegers;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EllipticCurve {
 
-  private static final ECNamedCurveParameterSpec SEC_P256_CURVE_SPEC = ECNamedCurveTable.getParameterSpec("secp256r1");
+  private static final ECNamedCurveParameterSpec SEC_P256_CURVE_SPEC =
+      ECNamedCurveTable.getParameterSpec("secp256r1");
   private static final String BC_PROVIDER = BouncyCastleProvider.PROVIDER_NAME;
 
   /**
    * Generates a ECDH KeyPair
+   *
    * @return the KeyPair
    */
   public static KeyPair generateKeyPair() {
@@ -58,13 +60,16 @@ public class EllipticCurve {
       KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("ECDH", BC_PROVIDER);
       keyPairGenerator.initialize(SEC_P256_CURVE_SPEC, new SecureRandom());
       return keyPairGenerator.generateKeyPair();
-    } catch (NoSuchAlgorithmException | NoSuchProviderException | InvalidAlgorithmParameterException e) {
+    } catch (NoSuchAlgorithmException
+        | NoSuchProviderException
+        | InvalidAlgorithmParameterException e) {
       throw new RuntimeException(e);
     }
   }
 
   /**
    * Generates the public key from the transferred X and Y public coordinates
+   *
    * @param x X coordinate
    * @param y Y coordinate
    * @return the ECDH PublicKey
@@ -80,37 +85,51 @@ public class EllipticCurve {
 
   /**
    * Generates the shared secret using the local PrivateKey and the remote PublicKey
+   *
    * @param remoteEcdhPublicKey remote PublicKey
    * @param localEcdhPrivateKey own PrivateKey
    * @throws IllegalArgumentException, if localEcdhPrivateKey is not of instance ECPrivateKey
    * @return the shared secret in bytes
    */
-  public static byte[] getSharedSecret(ECPublicKey remoteEcdhPublicKey, PrivateKey localEcdhPrivateKey) {
+  public static byte[] getSharedSecret(
+      ECPublicKey remoteEcdhPublicKey, PrivateKey localEcdhPrivateKey) {
     if (localEcdhPrivateKey instanceof ECPrivateKey ecPrivateKey) {
       return getSharedSecret(remoteEcdhPublicKey, ecPrivateKey);
     } else {
-      throw new IllegalArgumentException("Unsupported private key type " + localEcdhPrivateKey.getClass().getName());
+      throw new IllegalArgumentException(
+          "Unsupported private key type " + localEcdhPrivateKey.getClass().getName());
     }
   }
 
   /**
    * Generates the shared secret using the local PrivateKey and the remote PublicKey
+   *
    * @param remoteEcdhPublicKey remote PublicKey
    * @param localEcdhPrivateKey own PrivateKey
    * @return the shared secret in bytes
    */
-  public static byte[] getSharedSecret(ECPublicKey remoteEcdhPublicKey, ECPrivateKey localEcdhPrivateKey) {
+  public static byte[] getSharedSecret(
+      ECPublicKey remoteEcdhPublicKey, ECPrivateKey localEcdhPrivateKey) {
     ECDHBasicAgreement ecdhBasicAgreement = new ECDHBasicAgreement();
 
-    ECDomainParameters domainParams = new ECDomainParameters(SEC_P256_CURVE_SPEC.getCurve(), SEC_P256_CURVE_SPEC.getG(),
-      SEC_P256_CURVE_SPEC.getN(), SEC_P256_CURVE_SPEC.getH(),
-      SEC_P256_CURVE_SPEC.getSeed());
+    ECDomainParameters domainParams =
+        new ECDomainParameters(
+            SEC_P256_CURVE_SPEC.getCurve(),
+            SEC_P256_CURVE_SPEC.getG(),
+            SEC_P256_CURVE_SPEC.getN(),
+            SEC_P256_CURVE_SPEC.getH(),
+            SEC_P256_CURVE_SPEC.getSeed());
 
-    ECPrivateKeyParameters privateKeyParameters = new ECPrivateKeyParameters(localEcdhPrivateKey.getD(), domainParams);
+    ECPrivateKeyParameters privateKeyParameters =
+        new ECPrivateKeyParameters(localEcdhPrivateKey.getD(), domainParams);
     ecdhBasicAgreement.init(privateKeyParameters);
 
-    ECPoint ecPoint = SEC_P256_CURVE_SPEC.getCurve().createPoint(remoteEcdhPublicKey.getQ().getXCoord().toBigInteger(),
-      remoteEcdhPublicKey.getQ().getYCoord().toBigInteger());
+    ECPoint ecPoint =
+        SEC_P256_CURVE_SPEC
+            .getCurve()
+            .createPoint(
+                remoteEcdhPublicKey.getQ().getXCoord().toBigInteger(),
+                remoteEcdhPublicKey.getQ().getYCoord().toBigInteger());
 
     ECPublicKeyParameters publicKeyParameters = new ECPublicKeyParameters(ecPoint, domainParams);
 
