@@ -38,15 +38,15 @@ import org.bouncycastle.crypto.digests.SHAKEDigest;
 import org.bouncycastle.jcajce.SecretKeyWithEncapsulation;
 import org.bouncycastle.jcajce.spec.KEMExtractSpec;
 import org.bouncycastle.jcajce.spec.KEMGenerateSpec;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
-import org.bouncycastle.pqc.jcajce.spec.KyberParameterSpec;
+import org.bouncycastle.jcajce.spec.MLKEMParameterSpec;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class KyberEncoding {
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-  private static final String BC_PQC_PROVIDER = BouncyCastlePQCProvider.PROVIDER_NAME;
-  private static final String ALGORITHM = "KYBER";
+  private static final String BC_PROVIDER = BouncyCastleProvider.PROVIDER_NAME;
+  private static final String ALGORITHM = "ML-KEM";
 
   /**
    * Generate a Kyber KeyPair
@@ -55,9 +55,8 @@ public class KyberEncoding {
    */
   public static KeyPair generateKeyPair() {
     try {
-      KyberParameterSpec kyberParameterSpec = KyberParameterSpec.kyber768;
-      KeyPairGenerator kpg = KeyPairGenerator.getInstance(ALGORITHM, BC_PQC_PROVIDER);
-      kpg.initialize(kyberParameterSpec, SECURE_RANDOM);
+      KeyPairGenerator kpg = KeyPairGenerator.getInstance(ALGORITHM, BC_PROVIDER);
+      kpg.initialize(MLKEMParameterSpec.ml_kem_768, SECURE_RANDOM);
       return kpg.generateKeyPair();
     } catch (NoSuchAlgorithmException
         | NoSuchProviderException
@@ -74,8 +73,9 @@ public class KyberEncoding {
    */
   public static SecretKeyWithEncapsulation pqcGenerateEncryptionKey(PublicKey publicKey) {
     try {
-      var keyGen = KeyGenerator.getInstance(ALGORITHM, BC_PQC_PROVIDER);
-      keyGen.init(new KEMGenerateSpec(publicKey, "AES"), SECURE_RANDOM);
+      var keyGen = KeyGenerator.getInstance(ALGORITHM, BC_PROVIDER);
+      keyGen.init(
+          new KEMGenerateSpec.Builder(publicKey, "AES", 256).withNoKdf().build(), SECURE_RANDOM);
 
       final var bcResult = (SecretKeyWithEncapsulation) keyGen.generateKey();
       byte[] ct = bcResult.getEncapsulation();
@@ -85,6 +85,8 @@ public class KyberEncoding {
       // rather the current draft
       // The trick is derived from
       // https://words.filippo.io/dispatches/mlkem768/#bonus-track-using-a-ml-kem-implementation-as-kyber-v3
+      // It needs the raw ML-KEM secret, hence withNoKdf(): BouncyCastle would otherwise derive a
+      // key from it first and the result would no longer match Kyber v3.0.2
       byte[] resultSecret =
           ArrayUtils.subarray(shake256(ArrayUtils.addAll(sharedSecret, shaThree256(ct))), 0, 32);
 
@@ -106,8 +108,10 @@ public class KyberEncoding {
    */
   public static byte[] pqcGenerateDecryptionKey(PrivateKey privateKey, byte[] ct) {
     try {
-      var keyGen = KeyGenerator.getInstance(ALGORITHM, BC_PQC_PROVIDER);
-      keyGen.init(new KEMExtractSpec(privateKey, ct, "AES"), SECURE_RANDOM);
+      var keyGen = KeyGenerator.getInstance(ALGORITHM, BC_PROVIDER);
+      keyGen.init(
+          new KEMExtractSpec.Builder(privateKey, ct, "AES", 256).withNoKdf().build(),
+          SECURE_RANDOM);
       SecretKeyWithEncapsulation secEnc2 = (SecretKeyWithEncapsulation) keyGen.generateKey();
 
       // This trick is necessary since BouncyCastle does not implement Kyber versio 3.0.2, but
