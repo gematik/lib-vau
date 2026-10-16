@@ -3,6 +3,18 @@
 
 # Release notes lib-vau for ePA 3.x and above
 
+# Release 1.0.17
+
+### update
+
+- updated Bouncy Castle to 1.86 and migrated internal cryptographic operations to ML-KEM-768 while preserving Kyber v3.0.2 protocol compatibility.
+- updated to the latest versions: Bouncy Castle 1.86, Commons Lang 3.21.0, Jackson CBOR 2.22.3, SLF4J 2.0.20, Lombok 1.18.48, JUnit 6.1.3 and JaCoCo 0.8.15.
+- updated dependencies and build tooling: Commons Codec 1.22.1, Logback 1.6.3, Maven Surefire Plugin 3.5.6 and Maven Compiler Plugin 3.14.1
+
+### fixed 
+
+- fix Lombok annotation processing on JDK 23+
+
 # Release 1.0.16
 
 ### update

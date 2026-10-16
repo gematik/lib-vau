@@ -80,25 +80,22 @@ class ExceptionTest {
 
   @Test
   void testKyberGenerationProviderException() {
-    Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
     assertThatThrownBy(KyberEncoding::generateKeyPair).isInstanceOf(VauKyberCryptoException.class);
   }
 
   @Test
   void testKyberGenerateEncryptionProviderException() {
     Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-    Security.addProvider(new BouncyCastlePQCProvider());
-    Arrays.stream(Security.getProviders()).toList().indexOf(new BouncyCastlePQCProvider());
     var publicKey = KyberEncoding.generateKeyPair().getPublic();
-    removeBCProvider(new BouncyCastlePQCProvider());
+    removeBCProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
     assertThatThrownBy(() -> KyberEncoding.pqcGenerateEncryptionKey(publicKey))
         .isInstanceOf(VauKyberCryptoException.class);
   }
 
   @Test
   void testKyberGenerateDecryptionProviderException() {
-    Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-    int index = Security.addProvider(new BouncyCastlePQCProvider()) - 1;
+    int index =
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider()) - 1;
     var privateKey = KyberEncoding.generateKeyPair().getPrivate();
     for (Object a : Security.getProviders()[index].values()) {
       Security.removeProvider(a.toString());

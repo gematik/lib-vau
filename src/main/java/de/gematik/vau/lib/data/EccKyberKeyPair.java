@@ -43,7 +43,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
 import org.bouncycastle.jce.spec.ECPublicKeySpec;
 import org.bouncycastle.math.ec.ECPoint;
-import org.bouncycastle.pqc.jcajce.provider.BouncyCastlePQCProvider;
 import org.bouncycastle.util.encoders.Hex;
 
 @Data
@@ -89,8 +88,8 @@ public class EccKyberKeyPair {
   @SneakyThrows
   private static KeyPair readKyberKeypairFromPkcs8Pem(
       byte[] kyberPrivateKeyData, byte[] kyberPublicKeyData) {
-    final String keyType = "KYBER";
-    KeyFactory keyFactory = KeyFactory.getInstance(keyType, new BouncyCastlePQCProvider());
+    final String keyType = "ML-KEM";
+    KeyFactory keyFactory = KeyFactory.getInstance(keyType, BOUNCY_CASTLE_PROVIDER);
 
     X509EncodedKeySpec kyberPubKey =
         new X509EncodedKeySpec(

@@ -77,7 +77,7 @@ public class VauBasicPublicKey {
     X509EncodedKeySpec x509EncodedKeySpec =
         new X509EncodedKeySpec(
             ArrayUtils.unionByteArrays(KYBER_PUBLIC_KEY_ENCODING_HEADER, kyberPublicKeyBytes));
-    KeyFactory keyFactory = KeyFactory.getInstance("KYBER", "BCPQC");
+    KeyFactory keyFactory = KeyFactory.getInstance("ML-KEM", "BC");
     return keyFactory.generatePublic(x509EncodedKeySpec);
   }
 }
